@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg: #0b0f15;
+  --surface: #0f1720;
+  --text: #e6eef6;
+  --muted: #9aa6b2;
+  --accent: #63b3ff;
+}
+
+[data-theme='light']{
+  --bg: #f6f8fa;
+  --surface: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+  --accent: #2563eb;
+}
+
+html,body,#app{ height:100%; margin:0; }
+body{ 
+  font-family: 'Fira Code', 'JetBrains Mono', 'Monaco', 'Menlo', monospace;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: 0.3px;
+  line-height: 1.5;
+}
+
+.desktop{ background:var(--bg); color:var(--text) }

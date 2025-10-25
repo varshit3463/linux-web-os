@@ -1,0 +1,22 @@
+{
+  "name": "linux-web-portfolio",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "launch-helper": "node ./launch-helper.js",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "svelte": "^4.0.0",
+    "@sveltejs/vite-plugin-svelte": "^2.0.0",
+    "localforage": "^1.10.0",
+    "markdown-it": "^13.0.1",
+    "dompurify": "^3.0.0"
+  },
+  "devDependencies": {
+    "vite": "^4.5.14"
+  }
+}

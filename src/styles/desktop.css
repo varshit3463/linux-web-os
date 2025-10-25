@@ -1,0 +1,266 @@
+/* Desktop-specific styles extracted from Desktop.svelte
+   - Terminal/Monospace aesthetic throughout
+   - Monospace typography with proper spacing
+*/
+:root {
+  /* theme variables - tweak these to retheme the header quickly */
+  --theme-bg-start: #0b0f15;
+  --theme-bg-end: #1b2430;
+  --theme-opaque: rgba(18,20,22,1);
+  --shadow-1: rgba(0,0,0,0.12);
+  --shadow-2: rgba(0,0,0,0.45);
+  --pill-fg: rgba(255,255,255,0.12);
+  --pill-border-fg: rgba(0,0,0,0.12);
+  --dot-highlight: rgba(255,255,255,0.03);
+  --dock-accent: rgba(255,255,255,0.06);
+  --label-bg: rgba(0,0,0,0.6);
+  --label-fg: #ffffff;
+
+  /* theme color defaults for dots. Keep both an rgba() version for CSS theming */
+  --theme-col-1: rgb(30, 137, 187);
+  --theme-col-2: rgb(103, 103, 103);
+  --theme-col-3: rgb(76, 88, 91);
+  --theme-col-4: rgb(128, 210, 171);
+  
+  /* Default nav colors - will be overridden by Desktop.svelte */
+  --nav-base: 59,65,70;
+  --nav-opaque: rgba(59,65,70,1);
+  --nav-pill: rgba(59,65,70,0.14);
+  --nav-btn: rgba(59,65,70,1);
+  --nav-accent: rgba(59,65,70,0.18);
+  --nav-border: rgba(59,65,70,0.28);
+}
+
+.desktop {
+  height: 100vh;
+  width: 100vw;
+  position: relative;
+  overflow: hidden;
+}
+
+.wallpaper {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--theme-bg-start), var(--theme-bg-end));
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.statusbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  z-index: 40;
+  background: var(--nav-opaque, var(--theme-opaque));
+  box-shadow: 0 1px 0 var(--shadow-1);
+  font-family: 'Fira Code', monospace;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+}
+
+.status-left,
+.status-center,
+.status-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-icon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.95;
+}
+
+/* Arch icon / right-side small icons use pill background */
+.status-right img.status-icon {
+  padding: 8px;
+  border-radius: 100px;
+  background: var(--nav-pill, var(--pill-fg));
+}
+
+.time {
+  color: var(--text);
+  font-size: 12px;
+  padding-left: 8px;
+}
+
+/* Color dots pill (fixed width so it visually matches the right pill)
+   Use no vertical padding so height is fully controlled by `height` when fixed.
+*/
+.dots-wrap {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 6px 12px;
+  gap: 16px;
+  border-radius: 30px;
+  background: var(--nav-pill, var(--pill-fg));
+  box-shadow: 0 2px 6px var(--shadow-1);
+  border: 1px solid var(--nav-border, var(--pill-border-fg));
+}
+
+.status-dots {
+  display: flex;
+  gap: 18px;
+}
+
+.dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: inline-block;
+  opacity: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 0 var(--dot-highlight);
+  border: 2px solid rgba(0,0,0,0.1);
+}
+
+.dot-1 { background: var(--dot-1, var(--theme-col-1)); border-color: var(--dot-1-border, rgba(40,40,40,1)); }
+.dot-2 { background: var(--dot-2, var(--theme-col-2)); border-color: var(--dot-2-border, rgba(40,40,40,1)); }
+.dot-3 { background: var(--dot-3, var(--theme-col-3)); border-color: var(--dot-3-border, rgba(40,40,40,1)); }
+.dot-4 { background: var(--dot-4, var(--theme-col-4)); border-color: var(--dot-4-border, rgba(40,40,40,1)); }
+
+/* Player: roomy controls so play button doesn't look cramped */
+.player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 20px;
+  padding: 6px 14px;
+  border-radius: 30px;
+  background: var(--nav-pill, var(--pill-fg));
+  box-shadow: 0 2px 6px var(--shadow-1);
+  border: 1px solid var(--nav-border, var(--pill-border-fg));
+}
+
+.pbtn {
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 8px;
+  height: auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+.pbtn.play { font-size: 16px; font-weight: 600; }
+.pbtn:hover { color: var(--accent); }
+
+.pbtn.pause { font-size: 18px; font-weight: 600; }
+.track { color: var(--text); font-size: 13px; opacity: 0.95; padding-left: 6px; }
+
+/* Right-side icons pill: roomy to match player/time */
+.icons-wrap {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  height: 20px;
+  padding: 6px 10px;
+  border-radius: 30px;
+  background: var(--nav-pill, var(--pill-fg));
+  box-shadow: 0 2px 6px var(--shadow-1);
+  border: 1px solid var(--nav-border, var(--pill-border-fg));
+  width: 142px;
+  justify-content: center;
+}
+
+.icons-wrap img.status-icon { padding: 2px 4px; border-radius: 50%; background: transparent; }
+.icons-wrap img.shutdown { padding-left: 6px; }
+
+/* Time pill: roomy like player */
+.time-wrap {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 6px 12px;
+  gap: 16px;
+  border-radius: 30px;
+  background: var(--nav-pill, var(--pill-fg));
+  box-shadow: 0 2px 6px var(--shadow-1);
+  border: 1px solid var(--nav-border, var(--pill-border-fg));
+}
+
+.time-wrap .time { padding: 0; }
+
+.dock { position: fixed; left: 50%; transform: translateX(-50%); bottom: 12px; display: flex; gap: 10px; z-index: 50; }
+
+.dock-item {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--nav-btn, var(--label-fg));
+  border: 1px solid var(--nav-accent, var(--dock-accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+  position: relative;
+}
+
+.dock-item img { width: 30px; height: 30px; object-fit: contain; border-radius: 6px; }
+
+.dock-item:hover { transform: translateY(-6px); box-shadow: 0 8px 20px var(--shadow-2); }
+
+.dock-label {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: -26px;
+  background: transparent;
+  color: var(--label-fg);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: 'Saira Condensed', sans-serif;
+  font-weight: 500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .12s ease, transform .12s ease;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.dock-item:hover .dock-label { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+
+.dock-dot {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
+}
+
+/* hidden legacy icons container (kept for fallback) */
+.icons { display: none; }
+
+/* Firefox component styling - inherits theme colors from navbar */
+.firefox-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: rgba(var(--nav-base), 1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.firefox-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: rgba(var(--nav-base), 1);
+}
