@@ -43,7 +43,7 @@
   .picker{ width:720px; max-width:90vw; background:var(--surface); color:var(--text); padding:12px; border-radius:8px }
   .header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px }
   .grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px }
-  .cell{ border-radius:6px; overflow:hidden; cursor:pointer; border:2px solid transparent }
+  .cell{ border-radius:6px; overflow:hidden; cursor:var(--cursor-pointer); border:2px solid transparent }
   .cell.sel{ outline:2px solid var(--accent) }
   img{ width:100%; height:90px; object-fit:cover; display:block }
 </style>

@@ -5,7 +5,7 @@
   const API_URL = 'http://localhost:3001/api';
 
   let fileSystem = null;
-  let currentFolderId = 'root';
+  let currentFolderId = null;
   let loading = true;
   let error = null;
   let newItemName = '';
@@ -14,8 +14,8 @@
   let selectedItemId = null;
 
   const shortcuts = [
-    { id: 'root', label: 'Computer', icon: '/references/icons/filemanager/computer.png' },
-    { id: 'home', label: 'liveuser', icon: '/references/icons/filemanager/live-user.png' },
+    { id: 'computer', label: 'Computer', icon: '/references/icons/filemanager/computer.png' },
+    { id: 'liveuser', label: 'liveuser', icon: '/references/icons/filemanager/live-user.png' },
     { id: 'desktop', label: 'Desktop', icon: '/references/icons/filemanager/desktop.png' },
     { id: 'recent', label: 'Recent', icon: '/references/icons/filemanager/recent.png' },
     { id: 'trash', label: 'Trash', icon: '/references/icons/filemanager/trash.png' },
@@ -23,7 +23,7 @@
     { id: 'music', label: 'Music', icon: '/references/icons/filemanager/music.png' },
     { id: 'pictures', label: 'Pictures', icon: '/references/icons/filemanager/picture.png' },
     { id: 'videos', label: 'Videos', icon: '/references/icons/filemanager/movies.png' },
-    { id: 'downloads', label: 'Downloads', icon: '/references/icons/filemanager/downloads.png' },
+    { id: 'downloads', label: 'Downloads', icon: '/references/icons/filemanager/downloads.png' }
   ];
 
   // --- Reactive State ---
@@ -35,12 +35,26 @@
   $: canNavigateBack = path && path.length > 1;
 
   // --- Helper Functions ---
+  const normalize = (value) => value?.toString().toLowerCase().replace(/[\s_-]+/g, '');
+
   function findNodeById(id, node) {
     if (!node) return null;
-    if (node.id === id) return node;
+    if (String(node.id) === String(id)) return node;
     if (node.children) {
       for (const child of node.children) {
         const found = findNodeById(id, child);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  function findNodeByName(name, node) {
+    if (!node) return null;
+    if (node.name && normalize(node.name) === normalize(name)) return node;
+    if (node.children) {
+      for (const child of node.children) {
+        const found = findNodeByName(name, child);
         if (found) return found;
       }
     }
@@ -62,12 +76,15 @@
 
   function getFolderIcon(folderName) {
     const name = folderName.toLowerCase();
+  if (name.includes('computer')) return '/references/icons/filemanager/computer.png';
+  if (name.includes('liveuser') || name.includes('live user')) return '/references/icons/folder-green.svg';
+  if (name === 'home') return '/references/icons/folder-favorites.svg';
     if (name === 'desktop') return '/references/icons/folder-drawing.svg';
     if (name.includes('document')) return '/references/icons/folder-documents.svg';
     if (name.includes('download')) return '/references/icons/folder-downloads.svg';
     if (name.includes('music')) return '/references/icons/folder-green.svg';
     if (name.includes('picture') || name.includes('image')) return '/references/icons/folder-images.svg';
-    if (name.includes('video')) return '/references/icons/folder-video.svg';
+  if (name.includes('video') || name.includes('vedio')) return '/references/icons/folder-video.svg';
     if (name.includes('public')) return '/references/icons/folder-image.svg';
     if (name.includes('template')) return '/references/icons/folder-grey.svg';
     if (name.includes('game')) return '/references/icons/folder-games.svg';
@@ -81,6 +98,13 @@
       const response = await fetch(`${API_URL}/fs`);
       if (!response.ok) throw new Error('Failed to load filesystem');
       fileSystem = await response.json();
+      if (!findNodeById(currentFolderId, fileSystem)) {
+        currentFolderId = fileSystem?.id ?? null;
+        const rootNode = findNodeById(currentFolderId, fileSystem);
+        if (rootNode?.children?.length === 1) {
+          currentFolderId = rootNode.children[0].id;
+        }
+      }
       error = null;
     } catch (err) {
       error = err.message;
@@ -148,8 +172,52 @@
     }
   }
 
+  function resolveLocationNode(locationId) {
+    if (!fileSystem) return null;
+    const direct = findNodeById(locationId, fileSystem);
+    if (direct) return direct;
+
+    const shortcut = shortcuts.find((s) => s.id === locationId);
+    const fallbackNames = [fileSystem?.name, shortcut?.label, locationId].filter(Boolean);
+    const nameMap = {
+      computer: fileSystem?.name ?? 'Computer',
+      liveuser: 'liveuser',
+      home: 'Home',
+      desktop: 'Desktop',
+      recent: 'Recent',
+      trash: 'Trash',
+      documents: 'Documents',
+      music: 'Music',
+      pictures: 'Pictures',
+      videos: 'Videos',
+      downloads: 'Downloads'
+    };
+    if (nameMap[locationId]) fallbackNames.unshift(nameMap[locationId]);
+
+    for (const candidate of fallbackNames) {
+      const targetNode = findNodeByName(candidate, fileSystem);
+      if (targetNode) {
+        return targetNode;
+      }
+    }
+    return null;
+  }
+
   function navigateToLocation(locationId) {
-    currentFolderId = locationId;
+    const targetNode = resolveLocationNode(locationId);
+    if (targetNode) {
+      currentFolderId = targetNode.id;
+    }
+  }
+
+  function isShortcutActive(locationId) {
+    if (!fileSystem || !currentFolder) return false;
+    const targetNode = resolveLocationNode(locationId);
+    if (!targetNode) {
+      return normalize(currentFolder.name) === normalize(locationId);
+    }
+    if (targetNode.id === currentFolderId) return true;
+    return path?.some((segment) => segment.id === targetNode.id);
   }
 
   // --- UI Event Handlers ---
@@ -195,7 +263,11 @@
     <div class="sidebar-section">
       <div class="sidebar-title">Places</div>
       {#each shortcuts as shortcut (shortcut.id)}
-        <button class="sidebar-item" on:click={() => navigateToLocation(shortcut.id)}>
+        <button
+          class="sidebar-item"
+          class:active={isShortcutActive(shortcut.id)}
+          on:click={() => navigateToLocation(shortcut.id)}
+        >
           <img src={shortcut.icon} alt={shortcut.label} class="sidebar-icon" />
           <span class="sidebar-label">{shortcut.label}</span>
         </button>

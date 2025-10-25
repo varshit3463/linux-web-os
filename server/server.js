@@ -81,15 +81,33 @@ function findParentById(items, id, parent = null) {
   return null
 }
 
+function findItemByPath(root, fsPath) {
+  const parts = fsPath.split('/').filter(p => p);
+  let current = root;
+
+  if (parts.length === 0) return root;
+  if (parts[0] !== root.name) return null;
+
+  for (let i = 1; i < parts.length; i++) {
+    if (!current || !current.children) return null;
+    const part = parts[i];
+    const found = current.children.find(child => child.name === part);
+    if (!found) return null;
+    current = found;
+  }
+  return current;
+}
+
+
 function getNextId(items) {
-  let maxId = 4
+  let maxId = 0;
   function traverse(arr) {
     for (let item of arr) {
       if (item.id > maxId) maxId = item.id
       if (item.children) traverse(item.children)
     }
   }
-  traverse(items)
+  traverse([items]);
   return maxId + 1
 }
 
@@ -104,6 +122,137 @@ app.get('/api/fs', (req, res) => {
     res.status(500).json({ error: 'Failed to read filesystem' })
   }
 })
+
+// Terminal API: ls
+app.get('/api/fs/ls', (req, res) => {
+    const fsPath = req.query.path;
+    if (!fsPath) {
+        return res.status(400).send('Path is required');
+    }
+    const fileSystem = readFileSystem();
+    const node = findItemByPath(fileSystem, fsPath);
+    if (node && node.type === 'folder') {
+        res.json(node.children || []);
+    } else {
+        res.status(404).send('Directory not found');
+    }
+});
+
+// Terminal API: cd
+app.post('/api/fs/cd', (req, res) => {
+    const { currentPath, targetPath } = req.body;
+    if (!targetPath) {
+        return res.status(400).json({ error: 'Target path is required' });
+    }
+
+    let newPath;
+    if (targetPath === '..') {
+        const parts = currentPath.split('/');
+        if (parts.length > 2) { // Can't go above /Computer/liveuser
+            parts.pop();
+            newPath = parts.join('/');
+        } else {
+            newPath = currentPath;
+        }
+    } else if (targetPath.startsWith('/')) {
+        newPath = targetPath;
+    } else {
+        newPath = path.join(currentPath, targetPath).replace(/\\/g, '/');
+    }
+
+    newPath = path.normalize(newPath).replace(/\\/g, '/');
+    
+    if (newPath === '.' || newPath === '') {
+        newPath = '/Computer/liveuser/Home';
+    }
+
+    const fileSystem = readFileSystem();
+    const node = findItemByPath(fileSystem, newPath);
+
+    if (node && node.type === 'folder') {
+        res.json({ newPath });
+    } else {
+        res.status(404).send(`cd: no such file or directory: ${targetPath}`);
+    }
+});
+
+// Terminal API: create (mkdir, touch)
+app.post('/api/fs/create', (req, res) => {
+    const { path: fsPath, name, type } = req.body;
+    const fileSystem = readFileSystem();
+    const parentNode = findItemByPath(fileSystem, fsPath);
+
+    if (!parentNode || parentNode.type !== 'folder') {
+        return res.status(404).send('Parent directory not found');
+    }
+
+    if (parentNode.children.some(child => child.name === name)) {
+        return res.status(409).send(`A ${type} with that name already exists.`);
+    }
+
+    const newItem = {
+        id: getNextId(fileSystem),
+        name,
+        type,
+    };
+
+    if (type === 'folder') {
+        newItem.children = [];
+    } else {
+        newItem.content = '';
+    }
+
+    parentNode.children.push(newItem);
+    if (writeFileSystem(fileSystem)) {
+        res.status(201).json(newItem);
+    } else {
+        res.status(500).send('Failed to write to filesystem');
+    }
+});
+
+// Terminal API: delete (rm)
+app.delete('/api/fs/delete', (req, res) => {
+    const { path: fsPath, name } = req.body;
+    const fileSystem = readFileSystem();
+    const parentNode = findItemByPath(fileSystem, fsPath);
+
+    if (!parentNode || parentNode.type !== 'folder') {
+        return res.status(404).send('Directory not found');
+    }
+
+    const itemIndex = parentNode.children.findIndex(child => child.name === name);
+
+    if (itemIndex === -1) {
+        return res.status(404).send('File or directory not found');
+    }
+
+    parentNode.children.splice(itemIndex, 1);
+
+    if (writeFileSystem(fileSystem)) {
+        res.status(200).send('Item deleted successfully');
+    } else {
+        res.status(500).send('Failed to write to filesystem');
+    }
+});
+
+// Terminal API: cat
+app.get('/api/fs/cat', (req, res) => {
+    const { path: fsPath, name } = req.query;
+    const fileSystem = readFileSystem();
+    const parentNode = findItemByPath(fileSystem, fsPath);
+
+    if (!parentNode || parentNode.type !== 'folder') {
+        return res.status(404).send('Directory not found');
+    }
+
+    const file = parentNode.children.find(child => child.name === name && child.type === 'file');
+
+    if (!file) {
+        return res.status(404).send('File not found');
+    }
+
+    res.json({ content: file.content || '' });
+});
 
 // GET: Get specific folder contents
 app.get('/api/fs/:folderId', (req, res) => {
@@ -146,7 +295,7 @@ app.post('/api/fs/folder', (req, res) => {
     }
 
     const newFolder = {
-      id: getNextId([fileSystem]),
+      id: getNextId(fileSystem),
       name: name.trim(),
       type: 'folder',
       children: []
@@ -186,7 +335,7 @@ app.post('/api/fs/file', (req, res) => {
     }
 
     const newFile = {
-      id: getNextId([fileSystem]),
+      id: getNextId(fileSystem),
       name: name.trim(),
       type: 'file',
       content: content

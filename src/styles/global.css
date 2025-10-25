@@ -8,6 +8,31 @@
   --text: #e6eef6;
   --muted: #9aa6b2;
   --accent: #63b3ff;
+  --app-surface: rgba(58, 63, 71, 0.95);
+  --app-surface-strong: rgba(50, 55, 62, 0.95);
+  --app-sidebar: rgba(43, 47, 55, 0.95);
+  --app-panel: rgba(88, 96, 110, 0.9);
+  --app-panel-hover: rgba(110, 120, 136, 0.92);
+  --app-border: rgba(26, 30, 37, 0.6);
+  --app-border-strong: rgba(18, 22, 27, 0.75);
+  --app-button: rgba(99, 179, 255, 1);
+  --app-button-hover: rgba(140, 200, 255, 1);
+  --app-button-border: rgba(70, 130, 200, 0.7);
+  --app-card: rgba(120, 132, 150, 0.3);
+  --app-menu: rgba(40, 44, 52, 0.95);
+  --cursor-default: url('/references/cursors/default_24.svg') 0 0, default;
+  --cursor-pointer: url('/references/cursors/pointer_24.svg') 5 0, pointer;
+  --cursor-text: url('/references/cursors/text_24.svg') 12 12, text;
+  --cursor-help: url('/references/cursors/help_24.svg') 0 0, help;
+  --cursor-not-allowed: url('/references/cursors/not-allowed_24.svg') 12 12, not-allowed;
+  --cursor-ew-resize: url('/references/cursors/ew-resize_24.svg') 12 12, ew-resize;
+  --cursor-ns-resize: url('/references/cursors/ns-resize_24.svg') 12 12, ns-resize;
+  --cursor-nwse-resize: url('/references/cursors/nwse-resize_24.svg') 12 12, nwse-resize;
+  --cursor-nesw-resize: url('/references/cursors/nesw-resize_24.svg') 12 12, nesw-resize;
+  --cursor-grab: url('/references/cursors/grab_24.svg') 6 2, grab;
+  --cursor-grabbing: url('/references/cursors/grabbing_24.svg') 6 2, grabbing;
+  --cursor-move: url('/references/cursors/move_24.svg') 10 10, move;
+  --cursor-progress: url('/references/cursors/progress_24.svg') 4 4, progress;
 }
 
 [data-theme='light']{
@@ -16,6 +41,18 @@
   --text: #111827;
   --muted: #6b7280;
   --accent: #2563eb;
+  --app-surface: rgba(236, 240, 244, 0.95);
+  --app-surface-strong: rgba(224, 229, 235, 0.95);
+  --app-sidebar: rgba(216, 222, 230, 0.95);
+  --app-panel: rgba(246, 248, 251, 0.9);
+  --app-panel-hover: rgba(233, 239, 248, 0.92);
+  --app-border: rgba(180, 190, 205, 0.6);
+  --app-border-strong: rgba(160, 170, 185, 0.75);
+  --app-button: rgba(98, 139, 255, 1);
+  --app-button-hover: rgba(120, 160, 255, 1);
+  --app-button-border: rgba(80, 120, 230, 0.6);
+  --app-card: rgba(200, 210, 225, 0.4);
+  --app-menu: rgba(248, 250, 253, 0.95);
 }
 
 html,body,#app{ height:100%; margin:0; }
@@ -28,3 +65,53 @@ body{
 }
 
 .desktop{ background:var(--bg); color:var(--text) }
+
+/* Custom SVG Cursors */
+* {
+  cursor: var(--cursor-default);
+}
+
+a, button, .dock-item, .dot, .pbtn, .fm-item, .fm-btn, .sidebar-item, .window-btn {
+  cursor: var(--cursor-pointer);
+}
+
+input[type="text"], textarea, .fm-name-input {
+  cursor: var(--cursor-text);
+}
+
+.titlebar {
+  cursor: var(--cursor-grab);
+}
+
+.titlebar:active {
+  cursor: var(--cursor-grabbing);
+}
+
+.resize-handle {
+  cursor: var(--cursor-nwse-resize);
+}
+
+button:disabled, [aria-disabled="true"] {
+  cursor: var(--cursor-not-allowed);
+}
+
+.help-icon {
+  cursor: var(--cursor-help);
+}
+
+/* Specific resize directions */
+.resize-horizontal {
+  cursor: var(--cursor-ew-resize);
+}
+
+.resize-vertical {
+  cursor: var(--cursor-ns-resize);
+}
+
+.resize-diagonal-1 {
+  cursor: var(--cursor-nwse-resize);
+}
+
+.resize-diagonal-2 {
+  cursor: var(--cursor-nesw-resize);
+}

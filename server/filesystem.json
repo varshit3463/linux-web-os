@@ -1,82 +1,57 @@
 {
-  "id": "root",
+  "id": "computer",
   "name": "Computer",
   "type": "folder",
   "children": [
     {
-      "id": "home",
-      "name": "live user",
+      "id": "drive-d",
+      "name": "D Drive",
+      "type": "folder",
+      "children": []
+    },
+    {
+      "id": "liveuser",
+      "name": "liveuser",
       "type": "folder",
       "children": [
         {
-          "id": "desktop",
-          "name": "Desktop",
+          "id": "home",
+          "name": "Home",
           "type": "folder",
           "children": [
             {
-              "id": 5,
-              "name": "pdf's",
+              "id": "desktop",
+              "name": "Desktop",
+              "type": "folder",
+              "children": []
+            },
+            {
+              "id": "documents",
+              "name": "Documents",
+              "type": "folder",
+              "children": []
+            },
+            {
+              "id": "downloads",
+              "name": "Downloads",
+              "type": "folder",
+              "children": []
+            },
+            {
+              "id": "videos",
+              "name": "Videos",
+              "type": "folder",
+              "children": []
+            },
+            {
+              "id": "pictures",
+              "name": "Pictures",
               "type": "folder",
               "children": []
             }
           ]
-        },
-        {
-          "id": "documents",
-          "name": "Documents",
-          "type": "folder",
-          "children": []
-        },
-        {
-          "id": "downloads",
-          "name": "Downloads",
-          "type": "folder",
-          "children": []
-        },
-        {
-          "id": "music",
-          "name": "Music",
-          "type": "folder",
-          "children": []
-        },
-        {
-          "id": "pictures",
-          "name": "Pictures",
-          "type": "folder",
-          "children": []
-        },
-        {
-          "id": "videos",
-          "name": "Videos",
-          "type": "folder",
-          "children": []
-        },
-        {
-          "id": "public",
-          "name": "Public",
-          "type": "folder",
-          "children": []
-        },
-        {
-          "id": "templates",
-          "name": "Templates",
-          "type": "folder",
-          "children": []
-        },
-        {
-          "id": "games",
-          "name": "Games",
-          "type": "folder",
-          "children": []
         }
       ]
-    },
-    {
-      "id": "d-drive",
-      "name": "d drive",
-      "type": "folder",
-      "icon": "folder-extension.svg",
-      "children": []
     }
   ]
 }

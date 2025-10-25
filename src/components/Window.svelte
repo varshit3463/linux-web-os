@@ -139,13 +139,16 @@
     justify-content: space-between;
     align-items: center;
     padding: 4px 10px;
-    background: rgba(var(--nav-base), 0.95);
-    cursor: grab;
+  background: rgba(var(--nav-base), 0.95);
+  cursor: var(--cursor-grab);
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     height: 24px;
     flex-shrink: 0;
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
+  }
+  .titlebar:active {
+    cursor: var(--cursor-grabbing);
   }
   .content {
     flex: 1;
@@ -165,7 +168,7 @@
     background: transparent;
     border: none;
     color: rgba(255, 255, 255, 0.6);
-    cursor: pointer;
+  cursor: var(--cursor-pointer);
     font-size: 12px;
     padding: 2px 4px;
     display: flex;
@@ -197,22 +200,14 @@
   button:hover img.icon-hover {
     opacity: 1;
   }
-  .btn-minimize:hover {
-    background: rgba(255, 255, 255, 0.1);
-  }
-  .btn-maximize:hover {
-    background: rgba(255, 255, 255, 0.1);
-  }
-  .btn-close:hover {
-    background: transparent;
-  }
+
   .resize-handle {
     position: absolute;
     bottom: 0;
     right: 0;
     width: 20px;
-    height: 20px;
-    cursor: se-resize;
+  height: 20px;
+  cursor: var(--cursor-nwse-resize);
     background: transparent;
   }
 </style>

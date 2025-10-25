@@ -63,7 +63,7 @@
     align-items: flex-start;
     gap: 10px;
     padding: 10px 16px;
-    cursor: pointer;
+  cursor: var(--cursor-pointer);
     transition: background 0.12s ease, color 0.12s ease;
     border-left: 3px solid transparent;
     color: rgba(200, 220, 240, 0.85);
