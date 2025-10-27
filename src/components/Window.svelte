@@ -7,6 +7,7 @@
   export let initialHeight = 600;
   export let appId = ''; // Unique identifier for the app (e.g., 'terminal', 'files', 'firefox')
   export let minimized = false; // External control of minimized state
+  export let zIndex = 100; // Z-index for window stacking
 
   let pos = { x: 0, y: 0 };
   let size = { width: initialWidth, height: initialHeight };
@@ -26,6 +27,8 @@
   function onMouseDown(e) {
     dragging = true;
     start = { x: e.clientX - pos.x, y: e.clientY - pos.y };
+    // Bring window to front on click
+    dispatch('bringToFront', { appId });
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
   }
@@ -86,12 +89,18 @@
   function close() {
     dispatch('close');
   }
+
+  function onWindowMouseDown(e) {
+    // Bring window to front on any click inside the window
+    dispatch('bringToFront', { appId });
+  }
 </script>
 
 <div
   class="window"
   class:minimized={minimized}
-  style="transform:translate({pos.x}px, {pos.y}px); width:{size.width}px; height:{size.height}px; display:{minimized ? 'none' : 'flex'}"
+  style="transform:translate({pos.x}px, {pos.y}px); width:{size.width}px; height:{size.height}px; display:{minimized ? 'none' : 'flex'}; z-index:{zIndex}"
+  on:mousedown={onWindowMouseDown}
 >
   <div class="titlebar" on:mousedown|preventDefault={onMouseDown}>
     <div class="title">{title}</div>

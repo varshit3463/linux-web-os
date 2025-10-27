@@ -4,8 +4,11 @@
 
   const API_URL = 'http://localhost:3001/api';
 
+  // Props
+  export let initialFolderId = null;
+
   let fileSystem = null;
-  let currentFolderId = null;
+  let currentFolderId = initialFolderId;
   let loading = true;
   let error = null;
   let newItemName = '';
@@ -254,6 +257,12 @@
   }
 
   onMount(loadFileSystem);
+
+  // Handle initial folder ID changes
+  $: if (fileSystem && initialFolderId && findNodeById(initialFolderId, fileSystem)) {
+    currentFolderId = initialFolderId;
+  }
+
 </script>
 
 <svelte:window on:click={closeContextMenu} on:keydown={handleKeyDown} />

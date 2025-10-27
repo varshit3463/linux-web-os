@@ -21,13 +21,24 @@ const defaultFileSystem = {
   children: [
     {
       id: 100,
-      name: 'Home',
+      name: 'liveuser',
       type: 'folder',
       children: [
-        { id: 1, name: 'Documents', type: 'folder', children: [] },
-        { id: 2, name: 'Downloads', type: 'folder', children: [] },
-        { id: 3, name: 'Media', type: 'folder', children: [] },
-        { id: 4, name: 'Work', type: 'folder', children: [] }
+        {
+          id: 101,
+          name: 'Home',
+          type: 'folder',
+          children: [
+            { id: 1, name: 'Documents', type: 'folder', children: [] },
+            { id: 2, name: 'Downloads', type: 'folder', children: [] },
+            { id: 3, name: 'Pictures', type: 'folder', children: [] },
+            { id: 4, name: 'Videos', type: 'folder', children: [] },
+            { id: 5, name: 'Desktop', type: 'folder', children: [
+              { id: 1001, name: 'test', type: 'folder', children: [] },
+              { id: 1002, name: 'rsit', type: 'folder', children: [] }
+            ]}
+          ]
+        }
       ]
     }
   ]

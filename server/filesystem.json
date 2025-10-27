@@ -23,7 +23,27 @@
               "id": "desktop",
               "name": "Desktop",
               "type": "folder",
-              "children": []
+              "children": [
+                {
+                  "id": 1,
+                  "name": "r5rt",
+                  "type": "folder",
+                  "children": []
+                },
+                {
+                  "id": 2,
+                  "name": "test",
+                  "type": "folder",
+                  "children": [
+                    {
+                      "id": 3,
+                      "name": "inside test",
+                      "type": "folder",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
             },
             {
               "id": "documents",
