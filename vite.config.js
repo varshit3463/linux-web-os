@@ -2,6 +2,9 @@ import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import path from 'path'
 import fs from 'fs'
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 function serveReferences() {
   const referencesDir = path.resolve(__dirname, 'references')
