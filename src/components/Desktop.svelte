@@ -34,7 +34,7 @@
     wifi: '/references/icons/wifi.png',
     settings: '/references/icons/settings-small.svg',
     shutdown: '/references/icons/Shutdown.svg',
-    badApple: '/references/icons/badapple.png',
+    badApple: '/references/icons/media.svg',
     aboutMe: '/references/icons/aboutme/aboutme.svg'
   }
 
