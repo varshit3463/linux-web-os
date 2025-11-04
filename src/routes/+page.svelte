@@ -12,6 +12,6 @@
 
 {#if showLoading}
   <LoadingScreen onComplete={handleLoadingComplete} />
+{:else}
+  <Desktop />
 {/if}
-
-<Desktop />
