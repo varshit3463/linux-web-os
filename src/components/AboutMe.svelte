@@ -60,10 +60,10 @@
   ];
 
   const certifications = [
-    { name: "MongoDB", issuer: "MongoDB University", bgImage: "/references/icons/aboutme/certificates/MongoDb.png" },
-    { name: "Generative AI", issuer: "Google Cloud", bgImage: "/references/icons/aboutme/certificates/generativeAi.png" },
-    { name: "Responsible AI Practices", issuer: "Google", bgImage: "/references/icons/aboutme/certificates/Embrace responsible ai practices .png" },
-    { name: "PyMongo Case Study", issuer: "MongoDB", bgImage: "/references/icons/aboutme/certificates/PyMongo Case Study - Aggregating Customer Data of a Bank.png" }
+    { name: "MongoDB", issuer: "MongoDB University", bgImage: "/references/icons/aboutme/certificates/Mongodb.png" },
+    { name: "Generative AI", issuer: "Google Cloud", bgImage: "/references/icons/aboutme/certificates/GenerativeAi.png" },
+    { name: "Leverage AI Tools", issuer: "Google", bgImage: "/references/icons/aboutme/certificates/LeverageAitools.png" },
+    { name: "PyMongo Case Study", issuer: "MongoDB", bgImage: "/references/icons/aboutme/certificates/Pymongo.png" }
   ];
 
   const interests = [
