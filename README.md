@@ -481,7 +481,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Arch Linux** - Inspiration for the design
 - **Svelte Team** - Amazing framework
-- **Bad Apple!!** - Iconic animation
 - **Open Source Community** - Icons and resources
 
 ---

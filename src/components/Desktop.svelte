@@ -653,9 +653,6 @@
     loadItemPositions()
     loadDesktopItems()
 
-    // Poll for changes every 3 seconds (increased from 2 for better performance)
-    const refreshInterval = setInterval(loadDesktopItems, DESKTOP_REFRESH_INTERVAL)
-
     // Listen for right-click menu events
     window.addEventListener('openTerminal', handleOpenTerminal)
     window.addEventListener('openFileManager', handleOpenFileManager)
@@ -721,7 +718,6 @@
     window.addEventListener('keydown', handleKeyboardShortcut, true)
 
     return () => {
-      clearInterval(refreshInterval)
       window.removeEventListener('openTerminal', handleOpenTerminal)
       window.removeEventListener('openFileManager', handleOpenFileManager)
       window.removeEventListener('openFirefox', handleOpenFirefox)
