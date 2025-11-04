@@ -8,6 +8,8 @@
   import WallpaperPicker from './WallpaperPicker.svelte'
   import Firefox from './Firefox.svelte'
   import DesktopRightClick from './rightclick/DesktopRightClick.svelte'
+  import BadApple from './BadApple.svelte'
+  import AboutMe from './AboutMe.svelte'
   import '../styles/desktop.css'
 
   // ========== CONSTANTS & ICONS ==========
@@ -30,17 +32,100 @@
     audio: '/references/icons/audio.svg',
     media: '/references/icons/media.svg',
     settings: '/references/icons/settings-small.svg',
-    shutdown: '/references/icons/Shutdown.svg'
+    shutdown: '/references/icons/Shutdown.svg',
+    badApple: '/references/icons/badapple.png',
+    aboutMe: '/references/icons/aboutme/aboutme.svg'
   }
 
   let dockApps = [
-    { id: 'projects', label: 'Applications', icon: ICONS.applications, alt: 'applications' },
-    { id: 'firefox', label: 'Firefox', icon: ICONS.firefox, alt: 'firefox' },
-    { id: 'files', label: 'Files', icon: ICONS.folder, alt: 'files' },
-    { id: 'terminal', label: 'Terminal', icon: ICONS.terminal, alt: 'terminal' }
+    { id: 'projects', label: 'Applications', icon: ICONS.applications, alt: 'applications', permanent: true },
+    { id: 'firefox', label: 'Firefox', icon: ICONS.firefox, alt: 'firefox', permanent: true },
+    { id: 'files', label: 'Files', icon: ICONS.folder, alt: 'files', permanent: true },
+    { id: 'terminal', label: 'Terminal', icon: ICONS.terminal, alt: 'terminal', permanent: true }
   ]
 
+  // Map of app configurations for temporary dock icons
+  const appConfigs = {
+    badapple: { label: 'Bad Apple', icon: ICONS.badApple, alt: 'bad apple' },
+    terminal: { label: 'Terminal', icon: ICONS.terminal, alt: 'terminal' },
+    files: { label: 'Files', icon: ICONS.folder, alt: 'files' },
+    firefox: { label: 'Firefox', icon: ICONS.firefox, alt: 'firefox' },
+    projects: { label: 'Applications', icon: ICONS.applications, alt: 'applications' },
+    aboutme: { label: 'About Me', icon: ICONS.aboutMe, alt: 'about me' }
+  }
+
+  // Computed dock apps: permanent + temporary (open windows not in permanent dock)
+  $: displayDockApps = (() => {
+    const permanentIds = dockApps.filter(app => app.permanent).map(app => app.id)
+    const temporaryApps = []
+    
+    // Add temporary icons for open windows not in permanent dock
+    Object.keys(windows).forEach(appId => {
+      if (windows[appId].visible && !permanentIds.includes(appId)) {
+        const config = appConfigs[appId]
+        if (config) {
+          temporaryApps.push({
+            id: appId,
+            label: config.label,
+            icon: config.icon,
+            alt: config.alt,
+            permanent: false
+          })
+        }
+      }
+    })
+    
+    return [...dockApps, ...temporaryApps]
+  })()
+
   let draggedDockIndex = null
+
+  // ========== MUSIC PLAYER ==========
+  let audioPlayer
+  let currentTrackIndex = 0
+  let tracks = [
+    { title: 'Lofi Hip Hop Radio', src: 'https://streams.ilovemusic.de/iloveradio17.mp3' },
+    { title: 'Chill Lounge', src: 'https://streaming.exclusive.radio/er/chill/icecast.audio' },
+    { title: 'Smooth Jazz', src: 'https://streaming.exclusive.radio/er/jazz/icecast.audio' },
+    { title: 'Electronic Dance', src: 'https://streaming.exclusive.radio/er/dance/icecast.audio' }
+  ]
+
+  // Reactive statement to update audio when track changes
+  $: if (audioPlayer && tracks[currentTrackIndex]) {
+    audioPlayer.src = tracks[currentTrackIndex].src
+    audioPlayer.load()
+    if (isPlaying) {
+      audioPlayer.play().catch(err => console.log('Play failed:', err))
+    }
+  }
+
+  function playAudio() {
+    if (audioPlayer) {
+      audioPlayer.play().catch(err => console.log('Play failed:', err))
+      isPlaying = true
+    }
+  }
+
+  function pauseAudio() {
+    if (audioPlayer) {
+      audioPlayer.pause()
+      isPlaying = false
+    }
+  }
+
+  function previousTrack() {
+    currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length
+  }
+
+  function nextTrack() {
+    currentTrackIndex = (currentTrackIndex + 1) % tracks.length
+  }
+
+  onMount(() => {
+    if (audioPlayer) {
+      audioPlayer.volume = 0.3 // Set default volume to 30%
+    }
+  })
 
   // ========== DRAG & DROP HANDLERS ==========
   function handleDockDragStart(e, index) {
@@ -120,6 +205,12 @@
       fileManagerFolderId = item.id
       openWindow('files')
       bringToFront('files')
+    } else if (item.id === 'badapple') {
+      openWindow('badapple')
+      bringToFront('badapple')
+    } else if (item.id === 'aboutme') {
+      openWindow('aboutme')
+      bringToFront('aboutme')
     }
   }
 
@@ -128,7 +219,9 @@
       terminal: { visible: false, minimized: false, zIndex: 100 },
       projects: { visible: false, minimized: false, zIndex: 100 },
       firefox: { visible: false, minimized: false, zIndex: 100 },
-      files: { visible: false, minimized: false, zIndex: 100 }
+      files: { visible: false, minimized: false, zIndex: 100 },
+      badapple: { visible: false, minimized: false, zIndex: 100 },
+      aboutme: { visible: false, minimized: false, zIndex: 100 }
     }
   }
 
@@ -293,13 +386,14 @@
   }
 
   // ========== WINDOW MANAGEMENT ==========
-  function openWindow(id) {
-    if (!windows[id]) return
+  function openWindow(appId, data = {}) {
+    if (!windows[appId]) return;
+    
     windows = {
       ...windows,
-      [id]: { ...windows[id], visible: true, minimized: false, zIndex: nextZIndex }
-    }
-    nextZIndex++
+      [appId]: { ...windows[appId], visible: true, minimized: false }
+    };
+    bringToFront(appId);
   }
 
   function closeWindow(id) {
@@ -413,22 +507,18 @@
     // Poll for changes every 3 seconds (increased from 2 for better performance)
     const refreshInterval = setInterval(loadDesktopItems, DESKTOP_REFRESH_INTERVAL)
 
-    // Listen for right-click menu events and close menu after action
-    const onMenuAction = () => {
-      closeContextMenu()
-    }
-
-    window.addEventListener('openTerminal', onMenuAction)
-    window.addEventListener('openFileManager', onMenuAction)
-    window.addEventListener('openFirefox', onMenuAction)
-    window.addEventListener('openApplications', onMenuAction)
+    // Listen for right-click menu events
+    window.addEventListener('openTerminal', handleOpenTerminal)
+    window.addEventListener('openFileManager', handleOpenFileManager)
+    window.addEventListener('openFirefox', handleOpenFirefox)
+    window.addEventListener('openApplications', handleOpenApplications)
 
     return () => {
       clearInterval(refreshInterval)
-      window.removeEventListener('openTerminal', onMenuAction)
-      window.removeEventListener('openFileManager', onMenuAction)
-      window.removeEventListener('openFirefox', onMenuAction)
-      window.removeEventListener('openApplications', onMenuAction)
+      window.removeEventListener('openTerminal', handleOpenTerminal)
+      window.removeEventListener('openFileManager', handleOpenFileManager)
+      window.removeEventListener('openFirefox', handleOpenFirefox)
+      window.removeEventListener('openApplications', handleOpenApplications)
     }
   })
 </script>
@@ -455,9 +545,14 @@
         on:dragstart={(e) => handleDesktopItemDragStart(e, index, item.id)}
         on:dragend={handleDesktopItemDragEnd}
         on:dblclick={() => handleDesktopItemDoubleClick(item)}
+        on:contextmenu|stopPropagation
       >
         <div class="desktop-item-icon">
-          {#if item.type === 'folder'}
+          {#if item.id === 'badapple'}
+            <img src={ICONS.badApple} alt={item.name} />
+          {:else if item.id === 'aboutme'}
+            <img src={ICONS.aboutMe} alt={item.name} />
+          {:else if item.type === 'folder'}
             <img src={ICONS.folder} alt={item.name} />
           {:else}
             <img src={ICONS.file} alt={item.name} />
@@ -469,7 +564,7 @@
   </div>
 
   <!-- Top status bar -->
-  <div class="statusbar">
+  <div class="statusbar" on:contextmenu|stopPropagation>
     <div class="status-left">
       <img src={ICONS.archLinux} alt="arch" class="status-icon" />
       <div class="dots-wrap" role="group" aria-label="theme colors">
@@ -483,17 +578,17 @@
     </div>
 
     <div class="status-center">
-      <div class="player">
-        <button class="pbtn" aria-label="previous">⏮</button>
+      <div class="music-controls">
+        <button class="pbtn" aria-label="previous" on:click={previousTrack}>⏮</button>
         <div class="play-circle" role="group" aria-label="play controls">
           {#if !isPlaying}
-            <button class="pbtn play" aria-label="play" aria-pressed="false" on:click={() => (isPlaying = true)}>▶</button>
+            <button class="pbtn play" aria-label="play" aria-pressed="false" on:click={playAudio}>▶</button>
           {:else}
-            <button class="pbtn pause" aria-label="pause" aria-pressed="true" on:click={() => (isPlaying = false)}>⏸</button>
+            <button class="pbtn pause" aria-label="pause" aria-pressed="true" on:click={pauseAudio}>⏸</button>
           {/if}
         </div>
-        <button class="pbtn" aria-label="next">⏭</button>
-        <div class="track">Grateful</div>
+        <button class="pbtn" aria-label="next" on:click={nextTrack}>⏭</button>
+        <div class="track">{tracks[currentTrackIndex].title}</div>
       </div>
     </div>
 
@@ -511,21 +606,21 @@
   </div>
 
   <!-- Centered dock (homepage) -->
-  <div class="dock">
-    {#each dockApps as app, index}
+  <div class="dock" on:contextmenu|stopPropagation>
+    {#each displayDockApps as app, index}
       <button 
         class="dock-item" 
         title={app.label} 
-        draggable="true"
-        on:dragstart={(e) => handleDockDragStart(e, index)}
-        on:dragover={handleDockDragOver}
-        on:drop={(e) => handleDockDrop(e, index)}
-        on:dragend={handleDockDragEnd}
+        draggable={app.permanent ? "true" : "false"}
+        on:dragstart={(e) => app.permanent && handleDockDragStart(e, index)}
+        on:dragover={app.permanent ? handleDockDragOver : null}
+        on:drop={(e) => app.permanent && handleDockDrop(e, index)}
+        on:dragend={app.permanent ? handleDockDragEnd : null}
         on:click={() => handleDockClick(app.id)}
       >
         <img src={app.icon} alt={app.alt} />
         <span class="dock-label">{app.label}</span>
-        {#if windows[app.id].visible && windows[app.id].minimized}
+        {#if windows[app.id] && windows[app.id].visible && windows[app.id].minimized}
           <span class="dock-dot"></span>
         {/if}
       </button>
@@ -565,7 +660,27 @@
 
   {#if windows.files.visible}
     <Window title="Files" appId="files" zIndex={windows.files.zIndex} minimized={windows.files.minimized} on:close={() => closeWindow('files')} on:minimize={handleMinimize} on:bringToFront={(e) => bringToFront(e.detail.appId)}>
-      <FileManager initialFolderId={fileManagerFolderId} />
+      <FileManager initialFolderId={fileManagerFolderId} on:openapp={(e) => {
+        const detail = e.detail;
+        const appId = typeof detail === 'object' ? detail.app : detail;
+        const props = typeof detail === 'object' ? detail : {};
+        openWindow(appId, props);
+      }} />
+    </Window>
+  {/if}
+
+  {#if windows.badapple?.visible}
+    <Window title="Bad Apple" appId="badapple" width={700} height={550} zIndex={windows.badapple.zIndex} minimized={windows.badapple.minimized} on:close={() => closeWindow('badapple')} on:minimize={handleMinimize} on:bringToFront={(e) => bringToFront(e.detail.appId)}>
+      <BadApple />
+    </Window>
+  {/if}
+
+  {#if windows.aboutme?.visible}
+    <Window title="About Me" appId="aboutme" width={1200} height={900} zIndex={windows.aboutme.zIndex} minimized={windows.aboutme.minimized} on:close={() => closeWindow('aboutme')} on:minimize={handleMinimize} on:bringToFront={(e) => bringToFront(e.detail.appId)}>
+      <AboutMe on:opendetail={(e) => {
+        const detail = e.detail;
+        openWindow(detail.app);
+      }} />
     </Window>
   {/if}
 
@@ -575,4 +690,14 @@
     x={rightClickMenuX}
     y={rightClickMenuY}
   />
+
+  <!-- Hidden Audio Player -->
+  <audio 
+    bind:this={audioPlayer}
+    src={tracks[currentTrackIndex].src}
+    preload="none"
+    crossorigin="anonymous"
+  >
+    Your browser does not support the audio element.
+  </audio>
 </div>

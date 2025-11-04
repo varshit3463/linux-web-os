@@ -1,7 +1,9 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, createEventDispatcher } from 'svelte';
+  import FolderRightClick from './rightclick/FolderRightClick.svelte';
   import '../styles/FileManager.css';
 
+  const dispatch = createEventDispatcher();
   const API_URL = 'http://localhost:3001/api';
 
   // Props
@@ -13,8 +15,14 @@
   let error = null;
   let newItemName = '';
   let showNewFolderInput = false;
-  let contextMenu = null;
   let selectedItemId = null;
+  let renamingItem = null;
+  let contextMenuTargetId = null;
+
+  let folderContextMenuVisible = false;
+  let contextMenuX = 0;
+  let contextMenuY = 0;
+  let selectedFolder = null;
 
   const shortcuts = [
     { id: 'computer', label: 'Computer', icon: '/references/icons/filemanager/computer.png' },
@@ -144,10 +152,33 @@
       if (!response.ok) throw new Error('Failed to delete item');
       await loadFileSystem(); // Reload
       selectedItemId = null; // Deselect after deleting
-      contextMenu = null;
     } catch (err) {
       error = err.message;
       console.error(err);
+    }
+  }
+
+  async function renameItem(itemId, newName) {
+    if (!itemId || !newName.trim()) {
+      renamingItem = null;
+      return;
+    }
+    try {
+      const response = await fetch(`${API_URL}/fs/rename`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: itemId, newName: newName.trim() }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to rename item');
+      }
+      await loadFileSystem(); // Reload to see the change
+    } catch (err) {
+      error = err.message;
+      console.error(err);
+    } finally {
+      renamingItem = null;
     }
   }
 
@@ -155,17 +186,18 @@
   function openFolder(folder) {
     if (folder.type === 'folder') {
       currentFolderId = folder.id;
+    } else if (folder.id === 'badapple') {
+      dispatch('openapp', 'badapple');
     }
   }
 
   function openSelectedItem() {
     if (selectedItemId) {
       const itemToOpen = findNodeById(selectedItemId, fileSystem);
-      if (itemToOpen && itemToOpen.type === 'folder') {
+      if (itemToOpen) {
         openFolder(itemToOpen);
       }
     }
-    closeContextMenu();
   }
 
   function navigateBack() {
@@ -224,29 +256,42 @@
   }
 
   // --- UI Event Handlers ---
-  function handleRightClick(e, itemId) {
+  function handleFolderRightClick(e, item) {
+    if (item.type !== 'folder') return;
     e.preventDefault();
-    selectedItemId = itemId;
+    e.stopPropagation();
+    
     const mainElement = document.querySelector('.file-manager-main');
     if (!mainElement) return;
     const rect = mainElement.getBoundingClientRect();
-    contextMenu = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    };
+
+    folderContextMenuVisible = true;
+    contextMenuX = e.clientX - rect.left;
+    contextMenuY = e.clientY - rect.top;
+    contextMenuTargetId = item.id;
+    selectedItemId = item.id;
   }
 
-  function closeContextMenu() {
-    contextMenu = null;
+  function closeAllContextMenus() {
+    folderContextMenuVisible = false;
   }
 
   function handleKeyDown(e) {
     if (e.key === 'Escape') {
       showNewFolderInput = false;
       newItemName = '';
-      contextMenu = null;
+      closeAllContextMenus();
     } else if (e.key === 'Delete' && selectedItemId) {
       deleteItem(selectedItemId);
+    }
+  }
+
+  function handleRenameKeydown(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      renameItem(renamingItem.id, e.target.value);
+    } else if (e.key === 'Escape') {
+      renamingItem = null;
     }
   }
 
@@ -254,6 +299,34 @@
     if (e.key === 'Enter') {
       createFolder();
     }
+  }
+
+  function handleMenuAction(e) {
+    const actionName = e.type;
+    console.log(`Action: ${actionName} on item ${contextMenuTargetId}`);
+    
+    switch(actionName) {
+      case 'open':
+        openSelectedItem();
+        break;
+      case 'delete':
+        deleteItem(contextMenuTargetId);
+        break;
+      case 'rename':
+        renamingItem = findNodeById(contextMenuTargetId, fileSystem);
+        break;
+      case 'openInTerminal':
+        const folderToOpen = findNodeById(contextMenuTargetId, fileSystem);
+        if (folderToOpen) {
+            const fullPath = getPathById(folderToOpen.id, fileSystem);
+            const pathString = fullPath.slice(1).map(p => p.name).join('/');
+            dispatch('openapp', { app: 'terminal', path: pathString });
+        }
+        break;
+      // TODO: Implement other actions
+    }
+    
+    closeAllContextMenus();
   }
 
   onMount(loadFileSystem);
@@ -265,9 +338,9 @@
 
 </script>
 
-<svelte:window on:click={closeContextMenu} on:keydown={handleKeyDown} />
+<svelte:window on:click={closeAllContextMenus} on:keydown={handleKeyDown} />
 
-<div class="file-manager" on:click={(e) => { if (e.target.classList.contains('file-manager-main') || e.target.classList.contains('fm-content')) selectedItemId = null; }}>
+<div class="file-manager" on:click={(e) => { if (e.target.classList.contains('file-manager-main') || e.target.classList.contains('fm-content')) selectedItemId = null; }} on:contextmenu|stopPropagation>
   <div class="fm-sidebar">
     <div class="sidebar-section">
       <div class="sidebar-title">Places</div>
@@ -322,7 +395,7 @@
         </div>
       {/if}
 
-      <div class="fm-wrapper">
+      <div class="fm-wrapper" on:contextmenu|preventDefault|stopPropagation>
         <div class="fm-content">
           {#if folderContents.length === 0}
             <div class="empty-state">
@@ -337,16 +410,30 @@
                   class:active={selectedItemId === item.id}
                   on:click|stopPropagation={() => selectedItemId = item.id}
                   on:dblclick={() => openFolder(item)}
-                  on:contextmenu={(e) => handleRightClick(e, item.id)}
+                  on:contextmenu={(e) => handleFolderRightClick(e, item)}
                   role="button"
                   tabindex="0"
                 >
                   {#if item.type === 'folder'}
                     <img src={getFolderIcon(item.name)} alt="folder" class="grid-icon" />
+                  {:else if item.id === 'badapple'}
+                    <img src="/references/icons/badapple.png" alt="Bad Apple" class="grid-icon" />
                   {:else}
                     <span class="grid-icon">📄</span>
                   {/if}
-                  <span class="grid-label">{item.name}</span>
+                  {#if renamingItem && renamingItem.id === item.id}
+                    <input 
+                      type="text" 
+                      value={item.name} 
+                      class="rename-input"
+                      style="width: {Math.max(60, Math.min(item.name.length * 8 + 20, 150))}px;"
+                      on:keydown={handleRenameKeydown} 
+                      on:blur={() => renamingItem = null} 
+                      autofocus 
+                    />
+                  {:else}
+                    <span class="grid-label">{item.name}</span>
+                  {/if}
                 </div>
               {/each}
             </div>
@@ -358,15 +445,19 @@
         </div>
       </div>
 
-      {#if contextMenu}
-        <div class="context-menu" style="left: {contextMenu.x}px; top: {contextMenu.y}px;">
-          <button class="ctx-item" on:click={openSelectedItem}>Open</button>
-          <button class="ctx-item" on:click={() => deleteItem(selectedItemId)}>
-            Delete
-          </button>
-          <button class="ctx-item" on:click={closeContextMenu}>Properties</button>
-        </div>
-      {/if}
+      <FolderRightClick
+        visible={folderContextMenuVisible}
+        x={contextMenuX}
+        y={contextMenuY}
+        on:open={(e) => handleMenuAction(e)}
+        on:openInTerminal={(e) => handleMenuAction(e)}
+        on:copy={(e) => handleMenuAction(e)}
+        on:cut={(e) => handleMenuAction(e)}
+        on:paste={(e) => handleMenuAction(e)}
+        on:delete={(e) => handleMenuAction(e)}
+        on:rename={(e) => handleMenuAction(e)}
+        on:properties={(e) => handleMenuAction(e)}
+      />
     {/if}
   </div>
 </div>

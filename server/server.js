@@ -72,7 +72,8 @@ function writeFileSystem(data) {
 
 function findItemById(items, id) {
   for (let item of items) {
-    if (item.id === id) return item
+    // Compare both as strings to handle mixed ID types
+    if (String(item.id) === String(id)) return item
     if (item.children) {
       const found = findItemById(item.children, id)
       if (found) return found
@@ -83,7 +84,8 @@ function findItemById(items, id) {
 
 function findParentById(items, id, parent = null) {
   for (let item of items) {
-    if (item.id === id) return parent
+    // Compare both as strings to handle mixed ID types
+    if (String(item.id) === String(id)) return parent
     if (item.children) {
       const found = findParentById(item.children, id, item)
       if (found) return found
@@ -114,12 +116,14 @@ function getNextId(items) {
   let maxId = 0;
   function traverse(arr) {
     for (let item of arr) {
-      if (item.id > maxId) maxId = item.id
-      if (item.children) traverse(item.children)
+      // Handle both string and numeric IDs
+      const itemId = typeof item.id === 'string' ? parseInt(item.id) || 0 : item.id;
+      if (itemId > maxId) maxId = itemId;
+      if (item.children) traverse(item.children);
     }
   }
   traverse([items]);
-  return maxId + 1
+  return maxId + 1;
 }
 
 // ==================== API ENDPOINTS ====================
@@ -372,7 +376,7 @@ app.post('/api/fs/file', (req, res) => {
 // DELETE: Delete folder or file
 app.delete('/api/fs/:itemId', (req, res) => {
   try {
-    const itemId = parseInt(req.params.itemId)
+    const itemId = req.params.itemId
     const fileSystem = readFileSystem()
 
     const parent = findParentById([fileSystem], itemId)
@@ -381,8 +385,8 @@ app.delete('/api/fs/:itemId', (req, res) => {
       return res.status(404).json({ error: 'Item not found' })
     }
 
-    // Remove from parent's children
-    parent.children = parent.children.filter(child => child.id !== itemId)
+    // Remove from parent's children (compare as strings)
+    parent.children = parent.children.filter(child => String(child.id) !== String(itemId))
 
     if (writeFileSystem(fileSystem)) {
       res.json({ success: true, message: 'Item deleted' })
@@ -424,6 +428,36 @@ app.put('/api/fs/:fileId', (req, res) => {
     res.status(500).json({ error: 'Failed to update file' })
   }
 })
+
+// POST: Rename folder or file
+app.post('/api/fs/rename', (req, res) => {
+  try {
+    const { id, newName } = req.body;
+    
+    if (!id || !newName || newName.trim() === '') {
+      return res.status(400).json({ message: 'ID and new name are required' });
+    }
+
+    const fileSystem = readFileSystem();
+    const item = findItemById([fileSystem], id);
+    
+    if (!item) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+
+    // Update the name
+    item.name = newName.trim();
+    
+    if (writeFileSystem(fileSystem)) {
+      res.status(200).json(item);
+    } else {
+      res.status(500).json({ message: 'Failed to save filesystem' });
+    }
+  } catch (error) {
+    console.error('Error renaming item:', error);
+    res.status(500).json({ message: 'Failed to rename item' });
+  }
+});
 
 // Start server
 app.listen(PORT, () => {

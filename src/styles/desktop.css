@@ -130,7 +130,8 @@
 .dot-4 { background: var(--dot-4, var(--theme-col-4)); border-color: var(--dot-4-border, rgba(40,40,40,1)); }
 
 /* Player: roomy controls so play button doesn't look cramped */
-.player {
+.player,
+.music-controls {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -140,6 +141,11 @@
   background: var(--nav-pill, var(--pill-fg));
   box-shadow: 0 2px 6px var(--shadow-1);
   border: 1px solid var(--nav-border, var(--pill-border-fg));
+}
+
+.play-circle {
+  display: flex;
+  align-items: center;
 }
 
 .pbtn {
@@ -304,8 +310,8 @@
 }
 
 .desktop-item-icon {
-  width: 64px;
-  height: 64px;
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -319,8 +325,9 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 8px;
+  padding: 6px;
   pointer-events: none;
+  border-radius: 16px;
 }
 
 .desktop-item-label {

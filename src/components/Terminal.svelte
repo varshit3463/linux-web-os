@@ -1,4 +1,4 @@
-<div class="terminal-container">
+<div class="terminal-container" on:contextmenu|stopPropagation>
   <div class="terminal-header">
     <span class="header-text">$ bash</span>
   </div>
@@ -33,13 +33,19 @@
   import { onMount } from 'svelte';
   import '../styles/terminal.css';
 
+  export let initialPosition = { x: 150, y: 150 };
+  export let initialSize = { width: 400, height: 300 };
+  export let initialPath = null;
+
   let inputElement;
   let terminalBody;
   let outputContainer;
   let commandHistory = [];
   let historyIndex = -1;
-  let currentPath = '/Computer/liveuser/Home';
+  let currentPath;
 
+  $: currentPath = initialPath || '~/';
+  
   function generateScreenfetch() {
     const art = [
       '                   -`',

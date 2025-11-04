@@ -1,0 +1,50 @@
+.context-menu {
+  position: absolute;
+  z-index: 1000;
+  background-color: var(--app-menu, #282c34);
+  border: 1px solid var(--app-border, #1c1e22);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: 'Saira Condensed', sans-serif;
+  min-width: 180px;
+}
+
+.ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  color: var(--text, #e6eef6);
+  text-align: left;
+  border-radius: 6px;
+  cursor: var(--cursor-pointer);
+  font-size: 14px;
+  transition: background-color 0.1s ease;
+}
+
+.ctx-item:hover {
+  background-color: var(--app-button, #3a7bfd);
+  color: white;
+}
+
+.ctx-icon {
+  width: 16px;
+  height: 16px;
+  /* Icons will be added later */
+}
+
+.ctx-label {
+  flex-grow: 1;
+}
+
+.ctx-separator {
+  height: 1px;
+  background-color: var(--app-border, #1c1e22);
+  margin: 4px 0;
+}

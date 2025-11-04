@@ -416,3 +416,25 @@
   background: var(--app-button, #4a9eff);
   color: #fff;
 }
+
+/* ==================== RENAME INPUT ==================== */
+.rename-input {
+  background: rgba(45, 49, 57, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(74, 158, 255, 0.6);
+  color: #e8e8e8;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 11px;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.12s ease;
+}
+
+.rename-input:focus {
+  background: rgba(45, 49, 57, 0.85);
+  border-color: var(--app-button, #4a9eff);
+  box-shadow: 0 2px 12px rgba(74, 158, 255, 0.4);
+}

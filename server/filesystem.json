@@ -25,19 +25,23 @@
               "type": "folder",
               "children": [
                 {
-                  "id": 1,
-                  "name": "r5rt",
-                  "type": "folder",
-                  "children": []
+                  "id": "badapple",
+                  "name": "Bad Apple",
+                  "type": "file"
+                },
+                {
+                  "id": "aboutme",
+                  "name": "About Me",
+                  "type": "file"
                 },
                 {
                   "id": 2,
-                  "name": "test",
+                  "name": "rename",
                   "type": "folder",
                   "children": [
                     {
                       "id": 3,
-                      "name": "inside test",
+                      "name": "inside",
                       "type": "folder",
                       "children": []
                     }
