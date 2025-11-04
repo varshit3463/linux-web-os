@@ -303,7 +303,6 @@
 
   function handleMenuAction(e) {
     const actionName = e.type;
-    console.log(`Action: ${actionName} on item ${contextMenuTargetId}`);
     
     switch(actionName) {
       case 'open':

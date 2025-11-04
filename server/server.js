@@ -269,6 +269,85 @@ app.get('/api/fs/cat', (req, res) => {
     res.json({ content: file.content || '' });
 });
 
+// Terminal API: move (mv)
+app.post('/api/fs/move', (req, res) => {
+    const { path: fsPath, from, to } = req.body;
+    const fileSystem = readFileSystem();
+    const parentNode = findItemByPath(fileSystem, fsPath);
+
+    if (!parentNode || parentNode.type !== 'folder') {
+        return res.status(404).send('Directory not found');
+    }
+
+    const itemIndex = parentNode.children.findIndex(child => child.name === from);
+    if (itemIndex === -1) {
+        return res.status(404).send(`mv: cannot stat '${from}': No such file or directory`);
+    }
+
+    const item = parentNode.children[itemIndex];
+    
+    // Check if destination already exists
+    if (parentNode.children.some(child => child.name === to)) {
+        return res.status(409).send(`mv: cannot move '${from}' to '${to}': File exists`);
+    }
+
+    // Rename the item
+    item.name = to;
+
+    if (writeFileSystem(fileSystem)) {
+        res.status(200).send('Item moved successfully');
+    } else {
+        res.status(500).send('Failed to write to filesystem');
+    }
+});
+
+// Terminal API: copy (cp)
+app.post('/api/fs/copy', (req, res) => {
+    const { path: fsPath, from, to } = req.body;
+    const fileSystem = readFileSystem();
+    const parentNode = findItemByPath(fileSystem, fsPath);
+
+    if (!parentNode || parentNode.type !== 'folder') {
+        return res.status(404).send('Directory not found');
+    }
+
+    const sourceItem = parentNode.children.find(child => child.name === from);
+    if (!sourceItem) {
+        return res.status(404).send(`cp: cannot stat '${from}': No such file or directory`);
+    }
+
+    // Check if destination already exists
+    if (parentNode.children.some(child => child.name === to)) {
+        return res.status(409).send(`cp: cannot copy '${from}' to '${to}': File exists`);
+    }
+
+    // Deep clone the item
+    const copiedItem = JSON.parse(JSON.stringify(sourceItem));
+    copiedItem.id = getNextId(fileSystem);
+    copiedItem.name = to;
+
+    // If it's a folder, update all child IDs recursively
+    if (copiedItem.type === 'folder' && copiedItem.children) {
+        function updateChildIds(items) {
+            items.forEach(item => {
+                item.id = getNextId(fileSystem);
+                if (item.children) {
+                    updateChildIds(item.children);
+                }
+            });
+        }
+        updateChildIds(copiedItem.children);
+    }
+
+    parentNode.children.push(copiedItem);
+
+    if (writeFileSystem(fileSystem)) {
+        res.status(201).json(copiedItem);
+    } else {
+        res.status(500).send('Failed to write to filesystem');
+    }
+});
+
 // GET: Get specific folder contents
 app.get('/api/fs/:folderId', (req, res) => {
   try {

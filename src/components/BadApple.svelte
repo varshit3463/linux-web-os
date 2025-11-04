@@ -6,71 +6,82 @@
   let isPlaying = false;
   let isMuted = false;
   let interval;
-  let pre; // Reference to the <pre> element
+  let pre;
   let currentTime = 0;
   let duration = 0;
-  let progressBar; // Reference to progress bar element
+  let progressBar;
 
-  function formatTime(seconds) {
+  const FPS = 30;
+  const PROGRESS_BAR_LENGTH = 30;
+
+  const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
-  }
+  };
 
-  function updateProgressBar() {
+  const updateProgressBar = () => {
     if (!audio) return;
     currentTime = audio.currentTime;
     duration = audio.duration || 0;
-  }
+  };
+
+  const updateFrame = () => {
+    const frameIndex = Math.floor(audio.currentTime * FPS); 
+    if (frameIndex < frames.length && pre) {
+      pre.textContent = frames[frameIndex];
+    }
+  };
+
+  const handleAudioEvent = (event, callback) => {
+    audio?.addEventListener(event, callback);
+  };
 
   onMount(async () => {
     try {
       const response = await fetch('/bad-apple-frames.json');
       if (!response.ok) {
-        console.error('Failed to load frames.json');
-        if(pre) pre.textContent = 'Error: Could not load bad-apple-frames.json. Make sure it is in the /public folder.';
+        if (pre) pre.textContent = 'Error: Could not load bad-apple-frames.json. Make sure it is in the /public folder.';
         return;
       }
+      
       frames = await response.json();
       audio = new Audio('/bad_apple.mp3');
+      audio.muted = true;
+      isMuted = true;
+      
+      if (typeof window !== 'undefined' && window.globalVolume !== undefined) {
+        audio.volume = window.globalVolume;
+      }
 
-      const updateFrame = () => {
-        const frameIndex = Math.floor(audio.currentTime * 30); 
-        if (frameIndex < frames.length) {
-          if (pre) {
-            pre.textContent = frames[frameIndex];
-          }
-        }
-      };
-
-      audio.addEventListener('play', () => {
+      handleAudioEvent('play', () => {
         isPlaying = true;
         interval = setInterval(() => {
           updateFrame();
           updateProgressBar();
-        }, 1000 / 30); // 30 FPS
+        }, 1000 / FPS);
       });
 
-      audio.addEventListener('pause', () => {
+      handleAudioEvent('pause', () => {
         isPlaying = false;
         clearInterval(interval);
       });
 
-      audio.addEventListener('ended', () => {
+      handleAudioEvent('ended', () => {
         isPlaying = false;
         clearInterval(interval);
         if (pre) pre.textContent = frames[0];
       });
 
-      audio.addEventListener('loadedmetadata', () => {
+      handleAudioEvent('loadedmetadata', () => {
         duration = audio.duration;
       });
 
-      audio.addEventListener('timeupdate', updateProgressBar);
+      handleAudioEvent('timeupdate', updateProgressBar);
 
     } catch (error) {
       console.error('Error loading Bad Apple:', error);
-      if(pre) pre.textContent = `Error loading animation. \n\n${error.message}`;
+      if (pre) pre.textContent = `Error loading animation. \n\n${error.message}`;
     }
   });
 
@@ -83,47 +94,39 @@
     clearInterval(interval);
   });
 
-  function handleContainerClick() {
-     if (!audio || frames.length === 0) return;
-    if (isPlaying) {
-      audio.pause();
-    } else {
-      audio.play();
-    }
-  }
+  const handleContainerClick = () => {
+    if (!audio || frames.length === 0) return;
+    isPlaying ? audio.pause() : audio.play();
+  };
 
-  function togglePlay(e) {
+  const togglePlay = (e) => {
     e.stopPropagation();
     handleContainerClick();
-  }
+  };
 
-  function toggleMute(e) {
+  const toggleMute = (e) => {
     e.stopPropagation();
     if (!audio) return;
     isMuted = !isMuted;
     audio.muted = isMuted;
-  }
+  };
 
-  function handleProgressClick(e) {
+  const handleProgressClick = (e) => {
     e.stopPropagation();
     if (!audio || !progressBar || !duration) return;
     
     const rect = progressBar.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const percentage = clickX / rect.width;
-    const newTime = percentage * duration;
     
-    audio.currentTime = newTime;
+    audio.currentTime = percentage * duration;
     updateProgressBar();
-  }
+  };
 
-  $: {
-    const totalChars = 30;
-    const progress = duration > 0 ? currentTime / duration : 0;
-    const completedChars = Math.floor(progress * totalChars);
-    const progressBarText = '='.repeat(completedChars) + '[]' + '-'.repeat(Math.max(0, totalChars - completedChars));
-  }
-
+  $: progress = duration > 0 ? currentTime / duration : 0;
+  $: completedChars = Math.floor(progress * PROGRESS_BAR_LENGTH);
+  $: progressBarText = '='.repeat(completedChars);
+  $: remainingText = '-'.repeat(Math.max(0, PROGRESS_BAR_LENGTH - completedChars));
 </script>
 
 <div class="bad-apple-container" on:click={handleContainerClick} on:contextmenu|stopPropagation>
@@ -144,13 +147,10 @@
   >
     <div class="progress-bar">
       {#if duration > 0}
-        {@const totalChars = 30}
-        {@const progress = currentTime / duration}
-        {@const completedChars = Math.floor(progress * totalChars)}
-        <span class="completed">{'='.repeat(completedChars)}</span><span class="cursor">[]</span><span class="remaining">{'-'.repeat(Math.max(0, totalChars - completedChars))}</span>
+        <span class="completed">{progressBarText}</span><span class="cursor">[]</span><span class="remaining">{remainingText}</span>
         <span class="time-display">[{formatTime(currentTime)}/{formatTime(duration)}]</span>
       {:else}
-        <span class="remaining">{'-'.repeat(30)}[]</span>
+        <span class="remaining">{'-'.repeat(PROGRESS_BAR_LENGTH)}[]</span>
         <span class="time-display">[0:00]</span>
       {/if}
     </div>

@@ -101,6 +101,7 @@
   class:minimized={minimized}
   style="transform:translate({pos.x}px, {pos.y}px); width:{size.width}px; height:{size.height}px; display:{minimized ? 'none' : 'flex'}; z-index:{zIndex}"
   on:mousedown={onWindowMouseDown}
+  on:contextmenu|stopPropagation|preventDefault
 >
   <div class="titlebar" on:mousedown|preventDefault={onMouseDown}>
     <div class="title">{title}</div>

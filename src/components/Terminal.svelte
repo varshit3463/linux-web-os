@@ -30,8 +30,10 @@
 </div>
 
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, createEventDispatcher } from 'svelte';
   import '../styles/terminal.css';
+
+  const dispatch = createEventDispatcher();
 
   export let initialPosition = { x: 150, y: 150 };
   export let initialSize = { width: 400, height: 300 };
@@ -193,16 +195,43 @@
     switch (cmd) {
       case 'help': {
         const helpLines = [
-          'Available commands:',
-          '  ls - List files and directories',
-          '  cd [dir] - Change directory',
-          '  mkdir [dir] - Create a directory',
-          '  touch [file] - Create a file',
-          '  rm [file/dir] - Remove a file or directory',
-          '  cat [file] - Display file content',
-          '  pwd - Print working directory',
-          '  clear - Clear the terminal',
-          '  screenfetch - Display system information'
+          '<div class="help-section"><span class="help-header">FILE SYSTEM COMMANDS:</span></div>',
+          '  <span class="help-cmd">ls</span>                    - List files and directories',
+          '  <span class="help-cmd">cd [dir]</span>              - Change directory (use ~ for home, .. for parent)',
+          '  <span class="help-cmd">pwd</span>                   - Print working directory',
+          '  <span class="help-cmd">mkdir [name]</span>          - Create a new directory',
+          '  <span class="help-cmd">touch [name]</span>          - Create a new file',
+          '  <span class="help-cmd">rm [name]</span>             - Remove a file or directory',
+          '  <span class="help-cmd">cat [file]</span>            - Display file contents',
+          '  <span class="help-cmd">mv [from] [to]</span>        - Move or rename a file/directory',
+          '  <span class="help-cmd">cp [from] [to]</span>        - Copy a file/directory',
+          '',
+          '<div class="help-section"><span class="help-header">APPLICATION COMMANDS:</span></div>',
+          '  <span class="help-cmd">filemanager</span>           - Open file manager',
+          '  <span class="help-cmd">settings</span>              - Open system settings',
+          '  <span class="help-cmd">aboutme</span>               - Open about me page',
+          '  <span class="help-cmd">badapple</span>              - Open Bad Apple animation',
+          '  <span class="help-cmd">wallpaper</span>             - Open wallpaper picker',
+          '  <span class="help-cmd">apps</span>                  - Open applications menu',
+          '',
+          '<div class="help-section"><span class="help-header">SYSTEM COMMANDS:</span></div>',
+          '  <span class="help-cmd">screenfetch</span>           - Display system information',
+          '  <span class="help-cmd">clear</span>                 - Clear the terminal screen',
+          '  <span class="help-cmd">history</span>               - Show command history',
+          '  <span class="help-cmd">echo [text]</span>           - Print text to terminal',
+          '  <span class="help-cmd">date</span>                  - Show current date and time',
+          '  <span class="help-cmd">whoami</span>                - Display current user',
+          '',
+          '<div class="help-section"><span class="help-header">KEYBOARD SHORTCUTS:</span></div>',
+          '  <span class="help-shortcut">Ctrl+Alt+T</span>        - Open Terminal',
+          '  <span class="help-shortcut">Ctrl+Alt+F</span>        - Open File Manager',
+          '  <span class="help-shortcut">Ctrl+Alt+A</span>        - Open Applications',
+          '  <span class="help-shortcut">Ctrl+Alt+S</span>        - Open Settings',
+          '  <span class="help-shortcut">Ctrl+Alt+W</span>        - Open Wallpaper Picker',
+          '  <span class="help-shortcut">Super/Win Key</span>     - Open Applications',
+          '  <span class="help-shortcut">Ctrl+L</span>            - Clear terminal (in terminal)',
+          '',
+          '<div class="help-tip">💡 Tip: Use ↑/↓ arrow keys to navigate command history, Ctrl+L to clear</div>'
         ];
         helpLines.forEach(line => printToTerminal(line));
         break;
@@ -300,6 +329,83 @@
       printToTerminal(`<pre>${content}</pre>`, { wrap: false });
         } catch (error) {
       printToTerminal(`<span class="error">cat: ${error.message}</span>`);
+        }
+        break;
+      case 'settings':
+        printToTerminal('Opening Settings...');
+        dispatch('openapp', 'settings');
+        break;
+      case 'filemanager':
+        printToTerminal('Opening File Manager...');
+        dispatch('openapp', 'filemanager');
+        break;
+      case 'aboutme':
+        printToTerminal('Opening About Me...');
+        dispatch('openapp', 'aboutme');
+        break;
+      case 'badapple':
+        printToTerminal('Opening Bad Apple...');
+        dispatch('openapp', 'badapple');
+        break;
+      case 'wallpaper':
+        printToTerminal('Opening Wallpaper Picker...');
+        dispatch('openapp', 'wallpaper');
+        break;
+      case 'apps':
+        printToTerminal('Opening Applications...');
+        dispatch('openapp', 'applications');
+        break;
+      case 'history':
+        if (commandHistory.length === 0) {
+          printToTerminal('No command history available.');
+        } else {
+          commandHistory.slice().reverse().forEach((cmd, i) => {
+            printToTerminal(`  ${commandHistory.length - i}: ${cmd}`);
+          });
+        }
+        break;
+      case 'echo':
+        printToTerminal(args.join(' '));
+        break;
+      case 'date':
+        const now = new Date();
+        printToTerminal(now.toString());
+        break;
+      case 'whoami':
+        printToTerminal('hvar');
+        break;
+      case 'mv':
+        const [fromMv, toMv] = args;
+        if (!fromMv || !toMv) {
+          printToTerminal(`<span class="error">mv: missing operand</span>`);
+          break;
+        }
+        try {
+          const response = await fetch(`http://localhost:3001/api/fs/move`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path: currentPath, from: fromMv, to: toMv }),
+          });
+          if (!response.ok) throw new Error(await response.text());
+        } catch (error) {
+          printToTerminal(`<span class="error">mv: ${error.message}</span>`);
+        }
+        break;
+      case 'cp':
+        const [fromCp, toCp] = args;
+        if (!fromCp || !toCp) {
+          printToTerminal(`<span class="error">cp: missing operand</span>`);
+          break;
+        }
+        try {
+          const response = await fetch(`http://localhost:3001/api/fs/copy`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path: currentPath, from: fromCp, to: toCp }),
+          });
+          if (!response.ok) throw new Error(await response.text());
+        } catch (error) {
+          printToTerminal(`<span class="error">cp: ${error.message}</span>`);
         }
         break;
       case '':

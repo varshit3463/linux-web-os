@@ -25,7 +25,7 @@
   function close(){ dispatch('close') }
 </script>
 
-<div class="picker">
+<div class="picker" on:contextmenu|stopPropagation|preventDefault>
   <div class="header">
     <div>Choose wallpaper</div>
     <button on:click={close}>Close</button>

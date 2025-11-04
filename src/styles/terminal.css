@@ -113,3 +113,34 @@
   .terminal-content::-webkit-scrollbar-track { background: transparent; }
   .terminal-content::-webkit-scrollbar-thumb { background: rgba(var(--nav-base), 0.25); border-radius: 3px; }
   .terminal-content::-webkit-scrollbar-thumb:hover { background: rgba(var(--nav-base), 0.45); }
+
+  /* Help command styling */
+  .help-section {
+    margin-top: 0.5em;
+    margin-bottom: 0.3em;
+  }
+
+  .help-header {
+    color: #61AFEF;
+    font-weight: 700;
+    font-size: 13px;
+  }
+
+  .help-cmd {
+    color: #a3be8c;
+    font-weight: 600;
+  }
+
+  .help-shortcut {
+    color: #e5c07b;
+    font-weight: 600;
+  }
+
+  .help-tip {
+    margin-top: 0.8em;
+    padding: 8px 12px;
+    background: rgba(99, 179, 255, 0.1);
+    border-left: 3px solid #61AFEF;
+    color: #d8dee9;
+    font-size: 12px;
+  }

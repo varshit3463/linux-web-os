@@ -1,6 +1,6 @@
 .context-menu {
   position: absolute;
-  z-index: 1000;
+  z-index: 99;
   background-color: var(--app-menu, #282c34);
   border: 1px solid var(--app-border, #1c1e22);
   border-radius: 8px;

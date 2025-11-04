@@ -21,6 +21,7 @@
   --theme-col-2: rgb(103, 103, 103);
   --theme-col-3: rgb(76, 88, 91);
   --theme-col-4: rgb(128, 210, 171);
+  --theme-col-5: rgb(209, 159, 121); /* Custom color - will be overridden dynamically */
   
   /* Default nav colors - will be overridden by Desktop.svelte */
   --nav-base: 59,65,70;
@@ -181,8 +182,113 @@
   justify-content: center;
 }
 
+.icons-wrap { display: flex; gap: 8px; }
+
 .icons-wrap img.status-icon { padding: 2px 4px; border-radius: 50%; background: transparent; }
 .icons-wrap img.shutdown { padding-left: 6px; }
+
+/* Status Icon Container */
+.status-icon-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.volume-container {
+  padding-bottom: 135px;
+  margin-bottom: -135px;
+}
+
+/* Volume Slider Popup */
+.volume-slider-popup {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(var(--nav-base), 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  animation: slideDown 0.2s ease;
+  pointer-events: all;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.volume-slider {
+  -webkit-appearance: slider-vertical;
+  appearance: slider-vertical;
+  width: 6px;
+  height: 100px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  outline: none;
+  cursor: var(--cursor-pointer);
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(var(--nav-base), 1);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  cursor: var(--cursor-pointer);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(var(--nav-base), 1);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  cursor: var(--cursor-pointer);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.volume-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+}
+
+/* WiFi Tooltip */
+.wifi-tooltip {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(var(--nav-base), 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  animation: slideDown 0.2s ease;
+}
 
 /* Time pill: roomy like player */
 .time-wrap {

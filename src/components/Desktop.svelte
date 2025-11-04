@@ -3,13 +3,14 @@
   import Panel from './Panel.svelte'
   import Window from './Window.svelte'
   import Terminal from './Terminal.svelte'
-  import Projects from './Projects.svelte'
+  import Applications from './Applications.svelte'
   import FileManager from './FileManager.svelte'
   import WallpaperPicker from './WallpaperPicker.svelte'
   import Firefox from './Firefox.svelte'
   import DesktopRightClick from './rightclick/DesktopRightClick.svelte'
   import BadApple from './BadApple.svelte'
   import AboutMe from './AboutMe.svelte'
+  import Settings from './Settings.svelte'
   import '../styles/desktop.css'
 
   // ========== CONSTANTS & ICONS ==========
@@ -30,7 +31,7 @@
     file: '/references/icons/file.svg',
     terminal: '/references/icons/terminal.svg',
     audio: '/references/icons/audio.svg',
-    media: '/references/icons/media.svg',
+    wifi: '/references/icons/wifi.png',
     settings: '/references/icons/settings-small.svg',
     shutdown: '/references/icons/Shutdown.svg',
     badApple: '/references/icons/badapple.png',
@@ -51,7 +52,8 @@
     files: { label: 'Files', icon: ICONS.folder, alt: 'files' },
     firefox: { label: 'Firefox', icon: ICONS.firefox, alt: 'firefox' },
     projects: { label: 'Applications', icon: ICONS.applications, alt: 'applications' },
-    aboutme: { label: 'About Me', icon: ICONS.aboutMe, alt: 'about me' }
+    aboutme: { label: 'About Me', icon: ICONS.aboutMe, alt: 'about me' },
+    settings: { label: 'Settings', icon: ICONS.settings, alt: 'settings' }
   }
 
   // Computed dock apps: permanent + temporary (open windows not in permanent dock)
@@ -90,6 +92,16 @@
     { title: 'Electronic Dance', src: 'https://streaming.exclusive.radio/er/dance/icecast.audio' }
   ]
 
+  // Status bar controls
+  let showVolumeSlider = false
+  let showWifiTooltip = false
+  let volume = 0.5
+
+  // Web Audio API for better volume control
+  let audioContext
+  let gainNode
+  let source
+
   // Reactive statement to update audio when track changes
   $: if (audioPlayer && tracks[currentTrackIndex]) {
     audioPlayer.src = tracks[currentTrackIndex].src
@@ -101,7 +113,26 @@
 
   function playAudio() {
     if (audioPlayer) {
-      audioPlayer.play().catch(err => console.log('Play failed:', err))
+      // Initialize Web Audio API on first play
+      if (!audioContext) {
+        try {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)()
+          gainNode = audioContext.createGain()
+          gainNode.gain.value = volume
+          
+          source = audioContext.createMediaElementSource(audioPlayer)
+          source.connect(gainNode)
+          gainNode.connect(audioContext.destination)
+        } catch (e) {
+          console.error('Web Audio API not supported:', e)
+        }
+      }
+      
+      if (audioContext && audioContext.state === 'suspended') {
+        audioContext.resume()
+      }
+      
+      audioPlayer.play().catch(err => console.error('Play failed:', err))
       isPlaying = true
     }
   }
@@ -121,9 +152,84 @@
     currentTrackIndex = (currentTrackIndex + 1) % tracks.length
   }
 
+  // Function to update volume for all media elements
+  function updateGlobalVolume(newVolume) {
+    // Update Web Audio API gain node (most reliable)
+    if (gainNode) {
+      gainNode.gain.value = newVolume
+    }
+    
+    // Update music player (fallback)
+    if (audioPlayer) {
+      audioPlayer.volume = newVolume
+    }
+    
+    // Update all audio and video elements on the page (including BadApple)
+    if (typeof document !== 'undefined') {
+      const allMedia = document.querySelectorAll('audio, video')
+      allMedia.forEach((media) => {
+        media.volume = newVolume
+      })
+    }
+    
+    // Store volume globally so new audio elements can use it
+    if (typeof window !== 'undefined') {
+      window.globalVolume = newVolume
+    }
+  }
+
+  // Watch for new audio/video elements and apply volume
+  function watchForNewMedia() {
+    if (typeof window === 'undefined') return
+    
+    const observer = new MutationObserver(() => {
+      const allMedia = document.querySelectorAll('audio, video')
+      allMedia.forEach(media => {
+        if (media.volume !== volume) {
+          media.volume = volume
+        }
+      })
+    })
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    })
+    
+    return observer
+  }
+
+  // Shutdown function
+  function handleShutdown() {
+    if (confirm('⚠️ Warning: Close website?\n\nThis will close the current tab.')) {
+      window.close()
+      // Fallback if window.close() doesn't work (some browsers block it)
+      setTimeout(() => {
+        window.location.href = 'about:blank'
+      }, 100)
+    }
+  }
+
   onMount(() => {
     if (audioPlayer) {
-      audioPlayer.volume = 0.3 // Set default volume to 30%
+      audioPlayer.volume = volume
+    }
+    // Set volume for all existing media elements
+    const allMedia = document.querySelectorAll('audio, video')
+    allMedia.forEach(media => {
+      media.volume = volume
+    })
+    
+    // Set global volume for new elements
+    window.globalVolume = volume
+    
+    // Start watching for new media elements
+    const mediaObserver = watchForNewMedia()
+    
+    return () => {
+      if (mediaObserver) {
+        mediaObserver.disconnect()
+      }
     }
   })
 
@@ -221,7 +327,8 @@
       firefox: { visible: false, minimized: false, zIndex: 100 },
       files: { visible: false, minimized: false, zIndex: 100 },
       badapple: { visible: false, minimized: false, zIndex: 100 },
-      aboutme: { visible: false, minimized: false, zIndex: 100 }
+      aboutme: { visible: false, minimized: false, zIndex: 100 },
+      settings: { visible: false, minimized: false, zIndex: 100 }
     }
   }
 
@@ -458,6 +565,21 @@
     closeWallpaperPicker()
   }
 
+  function handleWallpaperChange(event) {
+    wallpaper = event.detail
+    if (wallpaper) {
+      localStorage.setItem(WALLPAPER_KEY, wallpaper)
+    }
+  }
+
+  function handleNavColorChange(event) {
+    const newIdx = event.detail
+    if (typeof newIdx === 'number' && newIdx >= 0 && newIdx <= 4) {
+      navIdx = newIdx
+      setNavColor(newIdx)
+    }
+  }
+
   function handleDesktopContextMenu(e) {
     e.preventDefault()
     rightClickMenuX = e.clientX
@@ -497,9 +619,36 @@
     openWindow('projects')
   }
 
+  function handleOpenSettings() {
+    rightClickMenuVisible = false
+    openWindow('settings')
+    bringToFront('settings')
+  }
+
   // ========== LIFECYCLE ==========
   onMount(() => {
     document.documentElement.setAttribute('data-theme', theme)
+    
+    // Load custom color if using index 4
+    const customColor = localStorage.getItem('customNavColor')
+    if (navIdx === 4 && customColor) {
+      // Convert hex to RGB format
+      const hexToRgb = (hex) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16)
+        } : null;
+      };
+      
+      const rgb = hexToRgb(customColor);
+      if (rgb) {
+        const rgbString = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+        document.documentElement.style.setProperty('--theme-col-5', rgbString);
+      }
+    }
+    
     setNavColor(navIdx)
     loadItemPositions()
     loadDesktopItems()
@@ -512,6 +661,64 @@
     window.addEventListener('openFileManager', handleOpenFileManager)
     window.addEventListener('openFirefox', handleOpenFirefox)
     window.addEventListener('openApplications', handleOpenApplications)
+    window.addEventListener('openSettings', handleOpenSettings)
+    window.addEventListener('wallpaperChange', handleWallpaperChange)
+    window.addEventListener('navColorChange', handleNavColorChange)
+
+    // Keyboard shortcuts handler
+    const handleKeyboardShortcut = (e) => {
+      const key = e.key.toLowerCase(); // Normalize to lowercase
+      
+      // Ctrl+Alt+T - Terminal
+      if (e.ctrlKey && e.altKey && key === 't') {
+        e.preventDefault()
+        e.stopPropagation()
+        openWindow('terminal')
+        bringToFront('terminal')
+        return
+      }
+      // Ctrl+Alt+F - File Manager
+      if (e.ctrlKey && e.altKey && key === 'f') {
+        e.preventDefault()
+        e.stopPropagation()
+        openWindow('files')
+        bringToFront('files')
+        return
+      }
+      // Ctrl+Alt+A - Applications
+      if (e.ctrlKey && e.altKey && key === 'a') {
+        e.preventDefault()
+        e.stopPropagation()
+        openWindow('projects')
+        bringToFront('projects')
+        return
+      }
+      // Ctrl+Alt+S - Settings
+      if (e.ctrlKey && e.altKey && key === 's') {
+        e.preventDefault()
+        e.stopPropagation()
+        openWindow('settings')
+        bringToFront('settings')
+        return
+      }
+      // Ctrl+Alt+W - Wallpaper Picker
+      if (e.ctrlKey && e.altKey && key === 'w') {
+        e.preventDefault()
+        e.stopPropagation()
+        wallpaperPickerOpen = true
+        return
+      }
+      // Super/Meta key - Applications (like Windows key)
+      if ((e.key === 'Meta' || e.key === 'Super') && !e.ctrlKey && !e.altKey && !e.shiftKey) {
+        e.preventDefault()
+        e.stopPropagation()
+        openWindow('projects')
+        bringToFront('projects')
+        return
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyboardShortcut, true)
 
     return () => {
       clearInterval(refreshInterval)
@@ -519,6 +726,10 @@
       window.removeEventListener('openFileManager', handleOpenFileManager)
       window.removeEventListener('openFirefox', handleOpenFirefox)
       window.removeEventListener('openApplications', handleOpenApplications)
+      window.removeEventListener('openSettings', handleOpenSettings)
+      window.removeEventListener('wallpaperChange', handleWallpaperChange)
+      window.removeEventListener('navColorChange', handleNavColorChange)
+      window.removeEventListener('keydown', handleKeyboardShortcut, true)
     }
   })
 </script>
@@ -594,10 +805,61 @@
 
     <div class="status-right">
       <div class="icons-wrap">
-        <img src={ICONS.audio} alt="audio" class="status-icon" />
-        <img src={ICONS.media} alt="media" class="status-icon" />
-        <img src={ICONS.settings} alt="settings" class="status-icon" />
-        <img src={ICONS.shutdown} alt="power" class="status-icon shutdown" />
+        <!-- Volume Control -->
+        <div 
+          class="status-icon-container volume-container"
+          on:mouseenter={() => showVolumeSlider = true}
+          on:mouseleave={() => showVolumeSlider = false}
+        >
+          <img src={ICONS.audio} alt="audio" class="status-icon" style="cursor: var(--cursor-pointer);" />
+          {#if showVolumeSlider}
+            <div class="volume-slider-popup">
+              <input 
+                type="range" 
+                min="0" 
+                max="1" 
+                step="0.01" 
+                bind:value={volume}
+                on:input={() => updateGlobalVolume(volume)}
+                class="volume-slider"
+                orient="vertical"
+              />
+              <div class="volume-label">{Math.round(volume * 100)}%</div>
+            </div>
+          {/if}
+        </div>
+
+        <!-- WiFi -->
+        <div 
+          class="status-icon-container"
+          on:mouseenter={() => showWifiTooltip = true}
+          on:mouseleave={() => showWifiTooltip = false}
+        >
+          <img src={ICONS.wifi} alt="wifi" class="status-icon" style="cursor: var(--cursor-pointer);" />
+          {#if showWifiTooltip}
+            <div class="wifi-tooltip">
+              No WiFi drivers available
+            </div>
+          {/if}
+        </div>
+
+        <!-- Settings -->
+        <img 
+          src={ICONS.settings} 
+          alt="settings" 
+          class="status-icon" 
+          on:click={() => { openWindow('settings'); bringToFront('settings'); }} 
+          style="cursor: var(--cursor-pointer);" 
+        />
+
+        <!-- Shutdown -->
+        <img 
+          src={ICONS.shutdown} 
+          alt="power" 
+          class="status-icon shutdown" 
+          on:click={handleShutdown}
+          style="cursor: var(--cursor-pointer);"
+        />
       </div>
       <div class="time-wrap">
         <div class="time">{new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
@@ -636,13 +898,20 @@
 
   {#if windows.terminal.visible}
     <Window title="Terminal" appId="terminal" zIndex={windows.terminal.zIndex} minimized={windows.terminal.minimized} on:close={() => closeWindow('terminal')} on:minimize={handleMinimize} on:bringToFront={(e) => bringToFront(e.detail.appId)}>
-      <Terminal />
+      <Terminal on:openapp={(e) => {
+        const appId = e.detail;
+        openWindow(appId);
+        bringToFront(appId);
+      }} />
     </Window>
   {/if}
 
   {#if windows.projects.visible}
-    <Window title="Projects" appId="projects" zIndex={windows.projects.zIndex} minimized={windows.projects.minimized} on:close={() => closeWindow('projects')} on:minimize={handleMinimize} on:bringToFront={(e) => bringToFront(e.detail.appId)}>
-      <Projects />
+    <Window title="Applications" appId="projects" width={700} height={550} zIndex={windows.projects.zIndex} minimized={windows.projects.minimized} on:close={() => closeWindow('projects')} on:minimize={handleMinimize} on:bringToFront={(e) => bringToFront(e.detail.appId)}>
+      <Applications on:launch={(e) => {
+        openWindow(e.detail.appId);
+        bringToFront(e.detail.appId);
+      }} />
     </Window>
   {/if}
 
@@ -681,6 +950,12 @@
         const detail = e.detail;
         openWindow(detail.app);
       }} />
+    </Window>
+  {/if}
+
+  {#if windows.settings?.visible}
+    <Window title="Settings" appId="settings" width={1000} height={700} zIndex={windows.settings.zIndex} minimized={windows.settings.minimized} on:close={() => closeWindow('settings')} on:minimize={handleMinimize} on:bringToFront={(e) => bringToFront(e.detail.appId)}>
+      <Settings onClose={() => closeWindow('settings')} />
     </Window>
   {/if}
 

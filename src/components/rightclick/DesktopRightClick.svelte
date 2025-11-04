@@ -1,94 +1,51 @@
 <script>
   import '../../styles/rightclick/desktoprightclick.css'
 
+  // Image imports
+  const ICONS = {
+    terminal: '/references/icons/rightclick/terminal.png',
+    folder: '/references/icons/rightclick/folder.png',
+    firefox: '/references/icons/rightclick/firefox.png',
+    application: '/references/icons/rightclick/application.png',
+    refresh: '/references/icons/rightclick/refresh.png'
+  }
+
   // Props
   export let visible = false
   export let x = 0
   export let y = 0
 
-  let menuElement
-  let items = []
   let clipboard = { items: [], mode: null }
 
-  // Build menu items for desktop
-  function buildMenuItems() {
-    return [
-      { id: 'terminal', label: 'Terminal', icon: '/references/icons/rightclick/terminal.png', action: () => handleTerminal() },
-      { id: 'file-manager', label: 'File Manager', icon: '/references/icons/rightclick/folder.png', action: () => handleFileManager() },
-      { id: 'firefox', label: 'Firefox', icon: '/references/icons/rightclick/firefox.png', action: () => handleFirefox() },
-      { separator: true },
-      { id: 'create-folder', label: 'Create Folder', icon: '/references/icons/rightclick/folder.png', action: () => handleCreateFolder() },
-      { id: 'applications', label: 'Applications', icon: '/references/icons/rightclick/application.png', action: () => handleApplications() },
-      { separator: true },
-      { id: 'copy', label: 'Copy', icon: 'C', action: () => handleCopy(), disabled: true },
-      { id: 'paste', label: 'Paste', icon: 'V', action: () => handlePaste(), disabled: clipboard.items.length === 0 },
-      { separator: true },
-      { id: 'settings', label: 'Settings', icon: 'S', action: () => handleSettings(), disabled: true },
-      { id: 'refresh', label: 'Refresh', icon: '/references/icons/rightclick/refresh.png', action: () => handleRefresh() }
-    ]
+  // Dispatch custom event helper
+  const dispatchEvent = (eventName) => {
+    window.dispatchEvent(new CustomEvent(eventName))
   }
 
-  // Action handlers
-  function handleTerminal() {
-    console.log('Open terminal')
-    const event = new CustomEvent('openTerminal', { detail: {} })
-    window.dispatchEvent(event)
-  }
-
-  function handleFileManager() {
-    console.log('Open file manager')
-    const event = new CustomEvent('openFileManager', { detail: {} })
-    window.dispatchEvent(event)
-  }
-
-  function handleFirefox() {
-    console.log('Open Firefox')
-    const event = new CustomEvent('openFirefox', { detail: {} })
-    window.dispatchEvent(event)
-  }
-
-  function handleCreateFolder() {
-    console.log('Create folder')
-  }
-
-  function handleApplications() {
-    console.log('Open applications')
-    const event = new CustomEvent('openApplications', { detail: {} })
-    window.dispatchEvent(event)
-  }
-
-  function handleCopy() {
-    console.log('Copy (not implemented yet)')
-  }
-
-  function handlePaste() {
-    console.log('Paste')
-  }
-
-  function handleSettings() {
-    console.log('Settings (not implemented yet)')
-  }
-
-  function handleRefresh() {
-    console.log('Refresh')
-    location.reload()
-  }
+  // Menu items configuration
+  const menuItems = [
+    { id: 'terminal', label: 'Terminal', icon: ICONS.terminal, action: () => dispatchEvent('openTerminal') },
+    { id: 'file-manager', label: 'File Manager', icon: ICONS.folder, action: () => dispatchEvent('openFileManager') },
+    { id: 'firefox', label: 'Firefox', icon: ICONS.firefox, action: () => dispatchEvent('openFirefox') },
+    { separator: true },
+    { id: 'applications', label: 'Applications', icon: ICONS.application, action: () => dispatchEvent('openApplications') },
+    { separator: true },
+    { id: 'paste', label: 'Paste', icon: 'V', action: () => {}, disabled: true },
+    { separator: true },
+    { id: 'settings', label: 'Settings', icon: 'S', action: () => dispatchEvent('openSettings') },
+    { id: 'refresh', label: 'Refresh', icon: ICONS.refresh, action: () => location.reload() }
+  ]
 
   function handleItemClick(item) {
     if (!item.disabled && item.action) {
       item.action()
     }
   }
-
-  // Update items when visible changes
-  $: if (visible) {
-    items = buildMenuItems()
-  }
 </script>
 
 {#if visible}
-  <div class="rightclick-menu" bind:this={menuElement} style="left: {x}px; top: {y}px;">
-    {#each items as item (item.id || `separator-${Math.random()}`)}
+  <div class="rightclick-menu" style="left: {x}px; top: {y}px;">
+    {#each menuItems as item (item.id || `separator-${Math.random()}`)}
       {#if item.separator}
         <div class="rightclick-separator"></div>
       {:else}
