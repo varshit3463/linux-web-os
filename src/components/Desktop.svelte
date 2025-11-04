@@ -19,7 +19,7 @@
   const NAV_INDEX_KEY = 'navIdx'
   const DESKTOP_ORDER_KEY = 'desktopItemsOrder'
   const DESKTOP_POSITIONS_KEY = 'desktopItemsPositions'
-  const DEFAULT_WALLPAPER = 'linear-gradient(180deg,#0b0f15,#1b2430)'
+  const DEFAULT_WALLPAPER = '/references/icons/wallpapers/awesome.png'
   const DESKTOP_REFRESH_INTERVAL = 3000 // 3 seconds instead of 2
 
   // Icon paths
@@ -34,7 +34,7 @@
     wifi: '/references/icons/wifi.png',
     settings: '/references/icons/settings-small.svg',
     shutdown: '/references/icons/Shutdown.svg',
-    badApple: '/references/icons/folder-video.svg',
+    badApple: '/references/icons/badapple.png',
     aboutMe: '/references/icons/aboutme/aboutme.svg'
   }
 
@@ -336,7 +336,7 @@
   let windows = createWindowState()
   let nextZIndex = 101
   let theme = localStorage.getItem(THEME_KEY) || 'dark'
-  let wallpaper = localStorage.getItem(WALLPAPER_KEY) || ''
+  let wallpaper = localStorage.getItem(WALLPAPER_KEY) || DEFAULT_WALLPAPER
   let navIdx = parseInt(localStorage.getItem(NAV_INDEX_KEY) || '0', 10)
   if (Number.isNaN(navIdx)) navIdx = 0
   let wallpaperPickerOpen = false
@@ -411,7 +411,7 @@
   const WHITE = [255, 255, 255]
   const BLACK = [0, 0, 0]
 
-  $: wallpaperImage = wallpaper ? `url(${wallpaper})` : DEFAULT_WALLPAPER
+  $: wallpaperImage = `url(${wallpaper})`
 
   function parseRgba(input) {
     const match = /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([0-9.]+))?\s*\)/i.exec(input ?? '')
