@@ -106,7 +106,7 @@
         </p>
       </div>
       <div class="avatar-3d">
-        <img src="references\icons\aboutme\me.png" alt="Profile" />
+        <img src="/references/icons/aboutme/me.png" alt="Profile" />
       </div>
     </div>
 
