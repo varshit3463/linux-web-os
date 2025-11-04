@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite dev",
     "launch-helper": "node ./launch-helper.js",
-    "build": "node_modules/vite/bin/vite.js build",
+    "build": "npx vite build",
     "preview": "vite preview"
   },
   "dependencies": {
