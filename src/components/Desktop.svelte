@@ -382,7 +382,7 @@
     if (isDraggingDesktopItem) return
     
     try {
-      const response = await fetch('http://localhost:3001/api/fs')
+      const response = await fetch('/api/fs')
       if (!response.ok) throw new Error('Failed to load filesystem')
       
       const fileSystem = await response.json()
